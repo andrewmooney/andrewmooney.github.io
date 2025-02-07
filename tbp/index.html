@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Multi-Body Simulation with Global Mass, Speed, and Body Count Controls</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #000;
+        font-family: sans-serif;
+        color: #fff;
+      }
+      #controls {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 10px;
+        border-radius: 5px;
+        z-index: 10;
+      }
+      #controls div {
+        margin-bottom: 10px;
+      }
+      #controls label {
+        display: inline-block;
+        width: 160px;
+      }
+      #controls input[type="range"] {
+        width: 200px;
+      }
+      canvas {
+        display: block;
+        background: #111;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Control Panel -->
+    <div id="controls">
+      <div>
+        <label for="speedSlider">Simulation Speed:</label>
+        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1" />
+        <span id="speedValue">1</span>
+      </div>
+      <div>
+        <label for="bodyCountSlider">Number of Bodies:</label>
+        <input type="range" id="bodyCountSlider" min="3" max="10" step="1" value="3" />
+        <span id="bodyCountValue">3</span>
+      </div>
+      <div>
+        <label for="massSlider">Global Mass:</label>
+        <input type="range" id="massSlider" min="2000" max="20000" step="10" value="1000" />
+        <span id="massValue">1000</span>
+      </div>
+    </div>
+
+    <canvas id="canvas"></canvas>
+    <script>
+      // Get the canvas and context
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Resize canvas to fill the window
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      // Simulation Parameters
+      const G = 0.1; // Gravitational constant (for visual effect)
+      const baseDt = 0.1; // Base time step
+      let simulationSpeed = parseFloat(document.getElementById("speedSlider").value);
+      let globalMass = parseFloat(document.getElementById("massSlider").value);
+      let bodies = [];
+
+      // Utility: Generate a random number between min and max
+      function randRange(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      // Body class definition
+      class Body {
+        constructor(x, y, vx, vy, mass, color) {
+          this.x = x;
+          this.y = y;
+          this.vx = vx;
+          this.vy = vy;
+          this.mass = mass;
+          this.color = color;
+        }
+        draw(ctx) {
+          // Radius scaled by cube root of mass
+          const radius = Math.cbrt(this.mass) * 0.5;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, radius, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.fill();
+        }
+      }
+
+      // Create bodies based on desired count and current globalMass
+      function createBodies(count) {
+        bodies = [];
+        for (let i = 0; i < count; i++) {
+          const margin = 50;
+          const x = randRange(margin, canvas.width - margin);
+          const y = randRange(margin, canvas.height - margin);
+          const vx = randRange(-1, 1);
+          const vy = randRange(-1, 1);
+          const hue = Math.floor(randRange(0, 360));
+          const color = `hsl(${hue}, 80%, 50%)`;
+          bodies.push(new Body(x, y, vx, vy, globalMass, color));
+        }
+      }
+
+      // Set up control panel event listeners
+
+      // Simulation Speed
+      const speedSlider = document.getElementById("speedSlider");
+      const speedValue = document.getElementById("speedValue");
+      speedSlider.addEventListener("input", () => {
+        simulationSpeed = parseFloat(speedSlider.value);
+        speedValue.textContent = simulationSpeed;
+      });
+
+      // Number of Bodies
+      const bodyCountSlider = document.getElementById("bodyCountSlider");
+      const bodyCountValue = document.getElementById("bodyCountValue");
+      bodyCountSlider.addEventListener("input", () => {
+        const count = parseInt(bodyCountSlider.value);
+        bodyCountValue.textContent = count;
+        createBodies(count);
+      });
+
+      // Global Mass Slider: Update the global mass and apply it to all bodies
+      const massSlider = document.getElementById("massSlider");
+      const massValue = document.getElementById("massValue");
+      massSlider.addEventListener("input", () => {
+        globalMass = parseFloat(massSlider.value);
+        massValue.textContent = globalMass;
+        // Update mass for all existing bodies
+        bodies.forEach((body) => {
+          body.mass = globalMass;
+        });
+      });
+
+      // Initialize simulation with the starting number of bodies.
+      createBodies(parseInt(bodyCountSlider.value));
+
+      // Main simulation update function
+      function update() {
+        // Adjust dt based on simulation speed
+        const dt = baseDt * simulationSpeed;
+
+        // Calculate net forces on each body
+        const forces = bodies.map(() => ({ fx: 0, fy: 0 }));
+        for (let i = 0; i < bodies.length; i++) {
+          for (let j = i + 1; j < bodies.length; j++) {
+            const dx = bodies[j].x - bodies[i].x;
+            const dy = bodies[j].y - bodies[i].y;
+            let distSq = dx * dx + dy * dy;
+            let dist = Math.sqrt(distSq);
+            if (dist < 1) dist = 1; // Prevent extreme forces
+            const force = (G * bodies[i].mass * bodies[j].mass) / distSq;
+            const fx = (force * dx) / dist;
+            const fy = (force * dy) / dist;
+            forces[i].fx += fx;
+            forces[i].fy += fy;
+            forces[j].fx -= fx;
+            forces[j].fy -= fy;
+          }
+        }
+
+        // Update positions and velocities
+        bodies.forEach((body, i) => {
+          const ax = forces[i].fx / body.mass;
+          const ay = forces[i].fy / body.mass;
+          body.vx += ax * dt;
+          body.vy += ay * dt;
+          body.x += body.vx * dt;
+          body.y += body.vy * dt;
+
+          // Determine radius for wall collision
+          const radius = Math.cbrt(body.mass) * 0.5;
+          // Bounce off the walls
+          if (body.x - radius < 0) {
+            body.x = radius;
+            body.vx *= -1;
+          }
+          if (body.x + radius > canvas.width) {
+            body.x = canvas.width - radius;
+            body.vx *= -1;
+          }
+          if (body.y - radius < 0) {
+            body.y = radius;
+            body.vy *= -1;
+          }
+          if (body.y + radius > canvas.height) {
+            body.y = canvas.height - radius;
+            body.vy *= -1;
+          }
+        });
+      }
+
+      // Draw function to clear canvas and render all bodies
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        bodies.forEach((body) => body.draw(ctx));
+      }
+
+      // Animation loop
+      function loop() {
+        update();
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      loop();
+    </script>
+  </body>
+</html>

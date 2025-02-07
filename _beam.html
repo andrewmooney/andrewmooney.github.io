@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Thick Beam Bending Simulation with Stress Coloring</title>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #222;
+        color: white;
+        font-family: sans-serif;
+      }
+      #ui {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 100;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 10px;
+        border-radius: 5px;
+      }
+      label {
+        display: block;
+        margin-bottom: 10px;
+      }
+      input[type="range"] {
+        vertical-align: middle;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <div id="ui">
+      <label>
+        Load (F):
+        <input type="range" id="load" min="0" max="10000" value="500" />
+        <span id="loadValue">500</span> N
+      </label>
+      <label>
+        Material:
+        <select id="material">
+          <option value="steel">Steel</option>
+          <option value="aluminum">Aluminum</option>
+          <option value="wood">Wood</option>
+        </select>
+      </label>
+      <label>
+        Beam Moment of Inertia (I):
+        <input type="range" id="inertia" min="0.0001" max="0.01" step="0.0001" value="0.001" />
+        <span id="inertiaValue">0.001</span>
+      </label>
+      <label>
+        Deflection Scale:
+        <input type="range" id="scale" min="1" max="500" value="200" />
+        <span id="scaleValue">200</span>
+      </label>
+    </div>
+
+    <script type="module">
+      // --- Simulation Parameters ---
+      const beamLength = 1.0; // beam length in meters
+      const numSegments = 100; // number of sample points along the beam
+
+      // Default parameters – these will be updated interactively
+      let load = parseFloat(document.getElementById("load").value); // in Newtons
+      let inertia = parseFloat(document.getElementById("inertia").value); // moment of inertia
+      let deflectionScale = parseFloat(document.getElementById("scale").value);
+
+      // Material properties (Young's modulus in Pascals)
+      const materials = {
+        steel: { E: 200e9 },
+        aluminum: { E: 70e9 },
+        wood: { E: 10e9 },
+      };
+      let currentMaterial = document.getElementById("material").value;
+      let E = materials[currentMaterial].E;
+
+      // --- UI Setup ---
+      const loadSlider = document.getElementById("load");
+      const loadValueDisplay = document.getElementById("loadValue");
+      const inertiaSlider = document.getElementById("inertia");
+      const inertiaValueDisplay = document.getElementById("inertiaValue");
+      const scaleSlider = document.getElementById("scale");
+      const scaleValueDisplay = document.getElementById("scaleValue");
+      const materialSelect = document.getElementById("material");
+
+      loadSlider.addEventListener("input", (e) => {
+        load = parseFloat(e.target.value);
+        loadValueDisplay.textContent = load;
+        updateBeamVertices();
+      });
+      inertiaSlider.addEventListener("input", (e) => {
+        inertia = parseFloat(e.target.value);
+        inertiaValueDisplay.textContent = inertia;
+        updateBeamVertices();
+      });
+      scaleSlider.addEventListener("input", (e) => {
+        deflectionScale = parseFloat(e.target.value);
+        scaleValueDisplay.textContent = deflectionScale;
+        updateBeamVertices();
+      });
+      materialSelect.addEventListener("change", (e) => {
+        currentMaterial = e.target.value;
+        E = materials[currentMaterial].E;
+        updateBeamVertices();
+      });
+
+      // --- Beam Deflection Function ---
+      // For a cantilever beam with a load F at the free end:
+      // y(x) = (F * x^2 / (6 E I)) * (3L - x)
+      function beamDeflection(x) {
+        return ((load * x * x) / (6 * E * inertia)) * (3 * beamLength - x);
+      }
+
+      // --- Coordinate Conversion ---
+      // Maps x in [0, beamLength] to clip-space x in [-0.8, 0.8],
+      // and scales y (deflection) by deflectionScale.
+      // (We invert y so that positive deflection appears downward.)
+      function convertToClip(x, y) {
+        const x_ndc = (x / beamLength) * 1.6 - 0.8;
+        const y_ndc = -y * deflectionScale;
+        return [x_ndc, y_ndc];
+      }
+
+      // --- WebGPU Initialization ---
+      if (!navigator.gpu) {
+        console.error("WebGPU is not supported on this browser.");
+      }
+      const canvas = document.getElementById("canvas");
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      const adapter = await navigator.gpu.requestAdapter();
+      const device = await adapter.requestDevice();
+      const context = canvas.getContext("webgpu");
+      const presentationFormat = navigator.gpu.getPreferredCanvasFormat();
+      context.configure({
+        device: device,
+        format: presentationFormat,
+        alphaMode: "opaque",
+      });
+
+      // --- Create Vertex Buffer ---
+      // We now generate a triangle strip with 2 vertices per segment.
+      // Each vertex has: position (2 floats) and color (4 floats) = 6 floats total.
+      // The buffer size is: numSegments * 2 vertices * 6 floats * 4 bytes per float.
+      const vertexBufferSize = numSegments * 2 * 6 * 4;
+      let vertexBuffer = device.createBuffer({
+        size: vertexBufferSize,
+        usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+      });
+
+      // --- Beam Geometry Generation ---
+      // We compute the beam's centerline, then for each centerline point we compute
+      // a tangent and perpendicular normal. Two vertices (offset along the normal)
+      // form the thick beam. We also compute a "stress" factor based on the physical x–coordinate.
+      // The vertex format is: [x, y, r, g, b, a]
+      function updateBeamVertices() {
+        // Compute centerline points (in clip space) along with the physical x-coordinate.
+        let centerline = [];
+        for (let i = 0; i < numSegments; i++) {
+          let t = i / (numSegments - 1);
+          let physicalX = t * beamLength;
+          let defl = beamDeflection(physicalX);
+          let [cx, cy] = convertToClip(physicalX, defl);
+          centerline.push({ x: cx, y: cy, physicalX: physicalX });
+        }
+
+        const halfWidth = 0.01; // Half the thickness of the beam (in clip space)
+        let thickVertices = new Float32Array(numSegments * 2 * 6);
+
+        for (let i = 0; i < numSegments; i++) {
+          let p0 = centerline[i];
+          // Compute a tangent direction.
+          let tangent;
+          if (i === 0) {
+            let p1 = centerline[i + 1];
+            tangent = [p1.x - p0.x, p1.y - p0.y];
+          } else if (i === numSegments - 1) {
+            let pPrev = centerline[i - 1];
+            tangent = [p0.x - pPrev.x, p0.y - pPrev.y];
+          } else {
+            let pPrev = centerline[i - 1];
+            let pNext = centerline[i + 1];
+            tangent = [(pNext.x - pPrev.x) / 2, (pNext.y - pPrev.y) / 2];
+          }
+          let len = Math.hypot(tangent[0], tangent[1]);
+          if (len === 0) len = 1;
+          tangent[0] /= len;
+          tangent[1] /= len;
+
+          // The normal is perpendicular to the tangent.
+          let normal = [-tangent[1], tangent[0]];
+
+          // Compute a stress factor (1 at the fixed end, 0 at the free end).
+          let stress = (beamLength - p0.physicalX) / beamLength;
+          // Interpolate from red (high stress) to white (low stress).
+          let r = 1.0;
+          let g = 1.0 - stress;
+          let b = 1.0 - stress;
+          let a = 1.0;
+
+          // Create two vertices for this centerline point.
+          let topX = p0.x + halfWidth * normal[0];
+          let topY = p0.y + halfWidth * normal[1];
+          let botX = p0.x - halfWidth * normal[0];
+          let botY = p0.y - halfWidth * normal[1];
+
+          // Vertex order: top vertex, then bottom vertex.
+          // Each vertex: [x, y, r, g, b, a]
+          thickVertices.set([topX, topY, r, g, b, a], i * 12);
+          thickVertices.set([botX, botY, r, g, b, a], i * 12 + 6);
+        }
+
+        // Update the GPU vertex buffer with the new thick beam vertices.
+        device.queue.writeBuffer(
+          vertexBuffer,
+          0,
+          thickVertices.buffer,
+          thickVertices.byteOffset,
+          thickVertices.byteLength
+        );
+      }
+
+      // --- Shaders (WGSL) ---
+      // The vertex shader now takes a color attribute and passes it to the fragment shader.
+      const vertexShaderWGSL = `
+        struct VertexOutput {
+          @builtin(position) position: vec4<f32>,
+          @location(0) vColor: vec4<f32>,
+        };
+        
+        @vertex
+        fn main(
+          @location(0) position: vec2<f32>,
+          @location(1) color: vec4<f32>
+        ) -> VertexOutput {
+          var output: VertexOutput;
+          output.position = vec4<f32>(position, 0.0, 1.0);
+          output.vColor = color;
+          return output;
+        }
+      `;
+
+      const fragmentShaderWGSL = `
+        @fragment
+        fn main(@location(0) vColor: vec4<f32>) -> @location(0) vec4<f32> {
+          return vColor;
+        }
+      `;
+
+      // --- Create Render Pipeline ---
+      // Note: we set the pipeline layout to "auto".
+      const pipeline = device.createRenderPipeline({
+        layout: "auto",
+        vertex: {
+          module: device.createShaderModule({ code: vertexShaderWGSL }),
+          entryPoint: "main",
+          buffers: [
+            {
+              arrayStride: 24, // 6 floats * 4 bytes each
+              attributes: [
+                {
+                  shaderLocation: 0,
+                  offset: 0,
+                  format: "float32x2",
+                },
+                {
+                  shaderLocation: 1,
+                  offset: 8,
+                  format: "float32x4",
+                },
+              ],
+            },
+          ],
+        },
+        fragment: {
+          module: device.createShaderModule({ code: fragmentShaderWGSL }),
+          entryPoint: "main",
+          targets: [{ format: presentationFormat }],
+        },
+        primitive: {
+          topology: "triangle-strip",
+        },
+      });
+
+      // --- Render Function ---
+      function render() {
+        const commandEncoder = device.createCommandEncoder();
+        const textureView = context.getCurrentTexture().createView();
+        const renderPassDescriptor = {
+          colorAttachments: [
+            {
+              view: textureView,
+              clearValue: { r: 0.1, g: 0.1, b: 0.1, a: 1.0 },
+              loadOp: "clear",
+              storeOp: "store",
+            },
+          ],
+        };
+
+        const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor);
+        passEncoder.setPipeline(pipeline);
+        passEncoder.setVertexBuffer(0, vertexBuffer);
+        // Draw the triangle strip (total vertices = numSegments * 2).
+        passEncoder.draw(numSegments * 2, 1, 0, 0);
+        passEncoder.end();
+        device.queue.submit([commandEncoder.finish()]);
+      }
+
+      // --- Initial Vertex Update & Animation Loop ---
+      updateBeamVertices();
+      function frame() {
+        render();
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+    </script>
+  </body>
+</html>

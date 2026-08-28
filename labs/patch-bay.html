@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patch Bay — Build Your Own Synth</title>
+<link rel="stylesheet" href="patch-bay.css">
+</head>
+<body>
+<div class="rack">
+
+<header>
+  <a class="backlink" href="/" style="font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:inherit;opacity:.7">&larr; Neuralcube</a>
+  <div class="brand">
+    <h1>Patch<span>·</span>Bay</h1>
+    <p>A modular synthesiser workbench. Add modules, run patch cables, make sound. Companion to Synth Lab — everything you learned there is a block on this bench.</p>
+  </div>
+</header>
+
+<!-- ============ MODULE 12: PATCH BAY ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Modular Workbench</div>
+  <h2>Build your own synth</h2>
+  <p>Early synthesisers had no fixed signal chain — you built one, live, by running <strong>patch cables</strong> between modules. Everything you've learned in this lab is a module on this bench. Wire them however you like.</p>
+  <p><strong>How to patch:</strong> add modules, drag them anywhere, then <strong>drag from an output port</strong> (amber ring) <strong>to an input port</strong> to run a cable — or click the output, then the input. Drag a cable off to unplug it; <strong>click a cable to probe it</strong> — the scopes below show that exact point in the chain (click again to return to the Output). Solid green cables carry <strong>sound</strong>; dashed amber cables are <strong>control</strong>. Want to write DSP yourself? Add a <strong>Code</strong> block (under &ldquo;Build your own&rdquo;) and press Edit code — your JavaScript runs as a live module. <strong>Eject code</strong> shows the whole patch as a program. Nothing sounds until a path reaches the Output.</p>
+  <details class="cheats">
+    <summary>Patching cheat sheet — control, notes &amp; pitch tricks</summary>
+    <p>The LFO wiggles the target's knob, the Envelope shapes it when triggered (hold its Trig button, or gate it from MIDI) — plug it straight into an Osc to gate the note itself, and MIDI In sets an Osc's pitch and fires Envelopes from a real keyboard — pick its channel, or All. No MIDI hardware? The <strong>Keys</strong> block does the same from your computer keyboard (A–K) or its on-screen buttons, and the <strong>Clock</strong> block fires gates on its own at a set rate. Note blocks chain too: MIDI In → <strong>Latch</strong> (notes stay held after you let go — press again to release) → <strong>Arp</strong> (steps through the held notes at its rate) → Osc/Envelope. Wire a note source into a <strong>Filter</strong> and its cutoff follows the played pitch — the KT knob sets how strongly. <strong>Detune</strong> nudges an Osc by cents — two detuned Oscs make the classic fat unison. <strong>Sync</strong> locks pitch: wire the leader Osc → Sync → follower Osc. Drop a cable on another input to re-route it, or anywhere else to remove it.</p>
+  </details>
+  <div class="demo">
+    <div class="btnrow" id="pal12">
+      <div class="palmods">
+      <div class="palgrp" role="group" aria-label="Sources">
+      <span class="grplbl">Sources</span>
+      <button class="pad" data-add="vco">+ Osc</button>
+      <button class="pad" data-add="noise">+ Noise</button>
+      </div>
+      <div class="palgrp" role="group" aria-label="Shaping">
+      <span class="grplbl">Shaping</span>
+      <button class="pad" data-add="vcf">+ Filter</button>
+      <button class="pad" data-add="vca">+ Amp</button>
+      <button class="pad" data-add="mix">+ Mixer</button>
+      </div>
+      <div class="palgrp" role="group" aria-label="Effects">
+      <span class="grplbl">Effects</span>
+      <button class="pad" data-add="del">+ Delay</button>
+      <button class="pad" data-add="rev">+ Reverb</button>
+      <button class="pad" data-add="cho">+ Chorus</button>
+      <button class="pad" data-add="drv">+ Drive</button>
+      <button class="pad" data-add="crush">+ Crusher</button>
+      </div>
+      <div class="palgrp" role="group" aria-label="Modulation">
+      <span class="grplbl">Modulation</span>
+      <button class="pad" data-add="lfo">+ LFO</button>
+      <button class="pad" data-add="env">+ Envelope</button>
+      </div>
+      <div class="palgrp" role="group" aria-label="Build your own">
+      <span class="grplbl">Build your own</span>
+      <button class="pad" data-add="code">+ Code</button>
+      </div>
+      <div class="palgrp" role="group" aria-label="Notes and pitch">
+      <span class="grplbl">Notes &amp; pitch</span>
+      <button class="pad" data-add="midi">+ MIDI In</button>
+      <button class="pad" data-add="keys">+ Keys</button>
+      <button class="pad" data-add="clock">+ Clock</button>
+      <button class="pad" data-add="arp">+ Arp</button>
+      <button class="pad" data-add="latch">+ Latch</button>
+      <button class="pad" data-add="det">+ Detune</button>
+      <button class="pad" data-add="sync">+ Sync</button>
+      </div>
+      </div>
+      <div class="palgrp" role="group" aria-label="Patch actions">
+      <span class="grplbl">Patch</span>
+      <span class="actset">
+      <button class="pad run" id="run12" aria-pressed="false">Start</button>
+      <select id="presets12" aria-label="Load an example patch"><option value="">Examples…</option></select>
+      <button class="pad" id="rand12">🎲 Random</button>
+      </span>
+      <span class="actset">
+      <button class="pad" id="save12">Save</button>
+      <select id="patches12" aria-label="Load a saved patch"><option value="">Load patch…</option></select>
+      <button class="pad" id="exp12">Export</button>
+      <button class="pad" id="imp12">Import</button>
+      <button class="pad" id="eject12" title="Download this patch as readable Web Audio code">Eject code</button>
+      </span>
+      <span class="actset">
+      <button class="pad" id="fs12" title="Full screen" aria-label="Full screen">⛶</button>
+      </span>
+      <input type="file" id="impfile12" accept=".json,application/json" style="display:none" aria-hidden="true">
+      </div>
+    </div>
+    <div class="patch" id="patch12"><svg id="wires12" aria-hidden="true"></svg><div class="world" id="world12"></div></div>
+    <p class="hint">Drag the empty bench to pan, scroll (or pinch) to zoom, double-click the bench to reset the view.</p>
+    <p class="scopelbl">Live waveform</p>
+    <canvas class="scope" id="scope12"></canvas>
+    <p class="scopelbl">Spectrum</p>
+    <canvas class="scope" id="spec12" style="height:70px"></canvas>
+    <div class="try"><b>Try this</b>Wire Osc → Filter → Output: that's Module 06's classic chain, built by hand. Now plug the LFO into the Filter — automatic wah. Swap the Osc for Noise and you've made wind. Try two Oscs into one Filter to play an interval. Experiment — any routing that reaches the Output will make sound.</div>
+  </div>
+</section>
+
+<footer>
+  <b>For teachers:</b> the bench is open-ended — set patch challenges ("make a wind sound", "build a bass with a filter sweep", "recreate the Synth Lab signal chain") and let students compare patches. Prefer the guided lessons first: <a href="synth-lab.html">Synth Lab</a> covers every concept these modules use. <a href="dsp-lab.html">DSP Lab</a> goes underneath them, to the samples. Everything runs offline in a single file using the Web Audio API.
+</footer>
+
+</div>
+
+<script src="patch-bay.js"></script>
+</body>
+</html>

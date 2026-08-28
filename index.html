@@ -1,0 +1,21 @@
+<!DOCTYPE html><html lang="en-AU"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="STEM concepts explained through real-world use."><title>Home · Neuralcube</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,400..800,0..100,0..1;1,9..144,400..800,0..100,0..1&display=swap"><script>
+      // set theme before first paint: saved choice wins, otherwise follow the system
+      (() => {
+        const saved = localStorage.getItem('nc-theme');
+        const dark = saved ? saved === 'dark'
+          : matchMedia('(prefers-color-scheme: dark)').matches;
+        if (dark) document.documentElement.dataset.theme = 'dark';
+      })();
+    </script><link rel="stylesheet" href="/_astro/_lesson_.B8deyi8g.css">
+<style>.home-title[data-astro-cid-j7pv25f6]{font-size:clamp(2.2rem,6vw,3.6rem);font-weight:750;line-height:1;letter-spacing:-.025em;font-variation-settings:"opsz" 144}.standfirst[data-astro-cid-j7pv25f6]{font-family:var(--serif);font-size:1.25rem;color:var(--dim)}.card[data-astro-cid-j7pv25f6] h3[data-astro-cid-j7pv25f6]{font-size:1.6rem}.kicker[data-astro-cid-j7pv25f6].meta{margin-top:.5rem}
+</style></head> <body> <a class="skip" href="#main">Skip to content</a> <header class="masthead"> <div class="wrap"> <a class="wordmark" href="/"><span class="cube" aria-hidden="true"></span>Neural<b>cube</b></a> <div class="mast-right"> <nav class="mast-nav" aria-label="Site"> <a href="/">All subjects</a> </nav> <button id="themeToggle" aria-label="Switch between light and dark theme">◐ Theme</button> </div> </div> </header> <main id="main" class="article"> <p class="kicker" data-astro-cid-j7pv25f6>Interactive lessons and labs</p> <h1 class="home-title" data-astro-cid-j7pv25f6>Learn STEM through the real world</h1> <p class="standfirst" data-astro-cid-j7pv25f6>
+Every concept here answers the question schools skip: <em data-astro-cid-j7pv25f6>when would I actually
+    use this?</em> </p> <div class="sec-head" data-astro-cid-j7pv25f6> <h2 data-astro-cid-j7pv25f6>Subjects</h2> <span class="note" data-astro-cid-j7pv25f6>More coming</span> </div> <a class="card" href="/digital-audio/" data-astro-cid-j7pv25f6> <h3 data-astro-cid-j7pv25f6>Digital Audio</h3> <p data-astro-cid-j7pv25f6>Everything that hits your ears is air being shoved about. This subject follows that shove all the way in — through a microphone, into 44,100 numbers a second, through filters and envelopes — and all the way back out of a speaker.</p> <p class="kicker meta" data-astro-cid-j7pv25f6>10 lessons</p> </a></main> <footer class="site"> <div class="wrap"> <span>Neuralcube — STEM, explained through the thing itself.</span> <span>Made in Australia · Labs run offline</span> </div> </footer> <script>
+      document.getElementById('themeToggle').addEventListener('click', () => {
+        const root = document.documentElement;
+        const dark = root.dataset.theme === 'dark';
+        if (dark) delete root.dataset.theme;
+        else root.dataset.theme = 'dark';
+        localStorage.setItem('nc-theme', dark ? 'light' : 'dark');
+      });
+    </script> </body> </html> 

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Interactive 2D Solar System (Canvas)</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        overflow: hidden;
+        background: #000;
+        font-family: sans-serif;
+        color: #fff;
+      }
+      canvas {
+        display: block;
+      }
+      /* Legend (top left) */
+      #legend {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.75);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+        line-height: 1.2em;
+      }
+      /* Controls (top right) */
+      #controls {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.75);
+        padding: 10px;
+        border-radius: 5px;
+        font-size: 12px;
+      }
+      #controls label {
+        display: block;
+        margin-bottom: 5px;
+      }
+      /* Tooltip styling */
+      #tooltip {
+        position: absolute;
+        background: rgba(0, 0, 0, 0.85);
+        color: #fff;
+        padding: 8px;
+        border-radius: 5px;
+        font-size: 12px;
+        pointer-events: none;
+        display: none;
+        z-index: 10;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+    <div id="legend"></div>
+    <div id="controls">
+      <label>
+        Zoom:
+        <input type="range" id="zoomSlider" min="0.2" max="3" step="0.1" value="1" />
+      </label>
+      <label>
+        Speed:
+        <input type="range" id="speedSlider" min="0.1" max="5" step="0.1" value="1" />
+      </label>
+    </div>
+    <div id="tooltip"></div>
+
+    <script>
+      // Global variables for zoom, simulation speed, and simulation time.
+      let zoomScale = 1;
+      let simulationSpeed = 1;
+      let simulationTime = 0;
+      let lastFrameTime = performance.now();
+      // Array to store shift-selected planet indices (for distance measurement).
+      let shiftSelectedPlanets = [];
+
+      // Get the canvas, context, and tooltip.
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const tooltipDiv = document.getElementById("tooltip");
+
+      // ====== Simulation Data ======
+      // Each planet now has an "ecc" value (eccentricity) so that its orbit is elliptical.
+      // The orbitRadius is the semi–major axis "a" and b is computed as a*sqrt(1-e^2).
+      const solarSystem = {
+        centerX: canvas.width / 2,
+        centerY: canvas.height / 2,
+        planets: [
+          {
+            name: "Mercury",
+            orbitRadius: 50,
+            ecc: 0.2056,
+            size: 3,
+            color: "rgb(179,179,179)",
+            orbitalPeriod: 8,
+            mass: 0.33,
+            gravity: 3.7,
+            moons: [],
+          },
+          {
+            name: "Venus",
+            orbitRadius: 70,
+            ecc: 0.0067,
+            size: 5,
+            color: "rgb(255,204,153)",
+            orbitalPeriod: 10,
+            mass: 4.87,
+            gravity: 8.87,
+            moons: [],
+          },
+          {
+            name: "Earth",
+            orbitRadius: 90,
+            ecc: 0.0167,
+            size: 5,
+            color: "rgb(51,102,255)",
+            orbitalPeriod: 12,
+            mass: 5.97,
+            gravity: 9.81,
+            moons: [{ name: "Moon", orbitRadius: 10, size: 2, color: "rgb(204,204,204)", orbitalPeriod: 3 }],
+          },
+          {
+            name: "Mars",
+            orbitRadius: 110,
+            ecc: 0.0934,
+            size: 4,
+            color: "rgb(255,77,77)",
+            orbitalPeriod: 14,
+            mass: 0.642,
+            gravity: 3.71,
+            moons: [],
+          },
+          {
+            name: "Jupiter",
+            orbitRadius: 150,
+            ecc: 0.0489,
+            size: 9,
+            color: "rgb(255,153,102)",
+            orbitalPeriod: 18,
+            mass: 1898,
+            gravity: 24.79,
+            moons: [
+              { name: "Io", orbitRadius: 12, size: 2, color: "rgb(255,204,102)", orbitalPeriod: 2 },
+              { name: "Europa", orbitRadius: 16, size: 2, color: "rgb(230,230,255)", orbitalPeriod: 2.5 },
+            ],
+          },
+          {
+            name: "Saturn",
+            orbitRadius: 190,
+            ecc: 0.0565,
+            size: 8,
+            color: "rgb(255,255,153)",
+            orbitalPeriod: 22,
+            mass: 568,
+            gravity: 10.44,
+            rings: { inner: 3, outer: 7 },
+            moons: [{ name: "Titan", orbitRadius: 14, size: 3, color: "rgb(230,204,179)", orbitalPeriod: 3 }],
+          },
+          {
+            name: "Uranus",
+            orbitRadius: 230,
+            ecc: 0.0463,
+            size: 6,
+            color: "rgb(153,230,255)",
+            orbitalPeriod: 26,
+            mass: 86.8,
+            gravity: 8.69,
+            moons: [],
+          },
+          {
+            name: "Neptune",
+            orbitRadius: 270,
+            ecc: 0.0086,
+            size: 6,
+            color: "rgb(102,153,255)",
+            orbitalPeriod: 30,
+            mass: 102,
+            gravity: 11.15,
+            moons: [],
+          },
+        ],
+        asteroids: [],
+      };
+
+      // Create a particle–based asteroid belt (300 asteroids) between Mars and Jupiter.
+      // (For simplicity, the asteroid orbits are circular.)
+      const numAsteroids = 300;
+      for (let i = 0; i < numAsteroids; i++) {
+        const orbitRadius = 120 + Math.random() * 20;
+        solarSystem.asteroids.push({
+          orbitRadius,
+          baseAngle: Math.random() * 2 * Math.PI,
+          angularSpeed: 1.5 + Math.random() * 0.5,
+          size: 1,
+          color: "rgb(179,179,179)",
+        });
+      }
+
+      // ====== Canvas Resizing ======
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        solarSystem.centerX = canvas.width / 2;
+        solarSystem.centerY = canvas.height / 2;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      // ====== Slider Controls ======
+      const zoomSlider = document.getElementById("zoomSlider");
+      zoomSlider.addEventListener("input", () => {
+        zoomScale = parseFloat(zoomSlider.value);
+      });
+      const speedSlider = document.getElementById("speedSlider");
+      speedSlider.addEventListener("input", () => {
+        simulationSpeed = parseFloat(speedSlider.value);
+      });
+
+      // ====== Legend Setup ======
+      function updateLegend() {
+        let html = `<h3>Solar System Legend</h3>
+                  <table>
+                    <tr>
+                      <th>Planet</th>
+                      <th>Mass (10^24 kg)</th>
+                      <th>Gravity (m/s²)</th>
+                      <th># Moons</th>
+                    </tr>`;
+        solarSystem.planets.forEach((planet) => {
+          html += `<tr>
+                    <td style="color: ${planet.color};">${planet.name}</td>
+                    <td>${planet.mass || "–"}</td>
+                    <td>${planet.gravity || "–"}</td>
+                    <td>${planet.moons.length}</td>
+                 </tr>`;
+        });
+        html += `</table>`;
+        document.getElementById("legend").innerHTML = html;
+      }
+      updateLegend();
+
+      // ====== Drawing Functions ======
+      // Draw an elliptical orbit. "a" is the semi–major axis and b = a*sqrt(1-e^2)
+      function drawOrbit(x, y, a, ecc) {
+        const b = a * Math.sqrt(1 - ecc * ecc);
+        ctx.beginPath();
+        ctx.strokeStyle = "rgba(255,255,255,0.1)";
+        ctx.lineWidth = 1;
+        ctx.ellipse(x, y, zoomScale * a, zoomScale * b, 0, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+
+      // Draw a circle (used for the Sun, planets, moons, and asteroids).
+      // The radius here is in simulation units and is scaled by zoomScale.
+      function drawCircle(x, y, radius, color) {
+        ctx.beginPath();
+        ctx.fillStyle = color;
+        ctx.arc(x, y, zoomScale * radius, 0, 2 * Math.PI);
+        ctx.fill();
+      }
+
+      // Draw Saturn's rings as a stroked arc.
+      function drawSaturnRings(x, y, planetSize, rings) {
+        const outerRadius = zoomScale * (planetSize + rings.outer);
+        const innerRadius = zoomScale * (planetSize + rings.inner);
+        const ringWidth = outerRadius - innerRadius;
+        const ringRadius = (outerRadius + innerRadius) / 2;
+        ctx.beginPath();
+        ctx.lineWidth = ringWidth;
+        ctx.strokeStyle = "rgba(200,200,150,0.8)";
+        ctx.arc(x, y, ringRadius, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+
+      // ====== Tooltip and Shift–Selection Handling ======
+      // When the canvas is clicked, we test whether a planet was hit.
+      canvas.addEventListener("click", (event) => {
+        const rect = canvas.getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        let clickedPlanetIndex = null;
+        // For each planet, compute its current position on its elliptical orbit.
+        solarSystem.planets.forEach((planet, index) => {
+          const theta = (2 * Math.PI * simulationTime) / planet.orbitalPeriod;
+          const a = planet.orbitRadius;
+          const b = a * Math.sqrt(1 - planet.ecc * planet.ecc);
+          const planetX = solarSystem.centerX + zoomScale * a * Math.cos(theta);
+          const planetY = solarSystem.centerY + zoomScale * b * Math.sin(theta);
+          // Use a hit threshold (planet radius + 5 pixels).
+          const hitThreshold = zoomScale * planet.size + 5;
+          const dx = mouseX - planetX;
+          const dy = mouseY - planetY;
+          if (Math.hypot(dx, dy) < hitThreshold) {
+            clickedPlanetIndex = index;
+          }
+        });
+        if (clickedPlanetIndex !== null) {
+          const planet = solarSystem.planets[clickedPlanetIndex];
+          const theta = (2 * Math.PI * simulationTime) / planet.orbitalPeriod;
+          const a = planet.orbitRadius;
+          const b = a * Math.sqrt(1 - planet.ecc * planet.ecc);
+          const planetX = solarSystem.centerX + zoomScale * a * Math.cos(theta);
+          const planetY = solarSystem.centerY + zoomScale * b * Math.sin(theta);
+          if (event.shiftKey) {
+            // For shift-clicks, add the planet index to the shift selection.
+            if (shiftSelectedPlanets.length >= 2) {
+              shiftSelectedPlanets = [];
+            }
+            if (!shiftSelectedPlanets.includes(clickedPlanetIndex)) {
+              shiftSelectedPlanets.push(clickedPlanetIndex);
+            }
+            tooltipDiv.style.display = "none";
+          } else {
+            // Regular click: clear any shift selection and show tooltip.
+            shiftSelectedPlanets = [];
+            tooltipDiv.innerHTML = `<strong>${planet.name}</strong><br>
+            Mass: ${planet.mass || "–"} (10^24 kg)<br>
+            Gravity: ${planet.gravity || "–"} m/s²<br>
+            Orbital Period: ${planet.orbitalPeriod} s<br>
+            Moons: ${planet.moons.length}${planet.rings ? "<br>Has Rings" : ""}`;
+            tooltipDiv.style.left = planetX + 10 + "px";
+            tooltipDiv.style.top = planetY - 40 + "px";
+            tooltipDiv.style.display = "block";
+          }
+        } else {
+          if (!event.shiftKey) {
+            tooltipDiv.style.display = "none";
+          }
+        }
+      });
+
+      // ====== Animation Loop ======
+      // We integrate simulationTime frame–by–frame so that changes in simulationSpeed do not reset positions.
+      function animate() {
+        const currentTime = performance.now();
+        const deltaTime = (currentTime - lastFrameTime) / 1000;
+        lastFrameTime = currentTime;
+        simulationTime += deltaTime * simulationSpeed;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw the Sun.
+        drawCircle(solarSystem.centerX, solarSystem.centerY, 20, "yellow");
+
+        // Draw planet orbits as ellipses.
+        solarSystem.planets.forEach((planet) => {
+          drawOrbit(solarSystem.centerX, solarSystem.centerY, planet.orbitRadius, planet.ecc);
+        });
+
+        // Draw planets, their moons, and labels.
+        solarSystem.planets.forEach((planet, index) => {
+          const theta = (2 * Math.PI * simulationTime) / planet.orbitalPeriod;
+          const a = planet.orbitRadius;
+          const b = a * Math.sqrt(1 - planet.ecc * planet.ecc);
+          const planetX = solarSystem.centerX + zoomScale * a * Math.cos(theta);
+          const planetY = solarSystem.centerY + zoomScale * b * Math.sin(theta);
+          // Draw the planet.
+          drawCircle(planetX, planetY, planet.size, planet.color);
+          // Draw Saturn's rings, if applicable.
+          if (planet.rings) {
+            drawSaturnRings(planetX, planetY, planet.size, planet.rings);
+          }
+          // Draw moons (their orbits are assumed circular).
+          planet.moons.forEach((moon) => {
+            ctx.beginPath();
+            ctx.strokeStyle = "rgba(255,255,255,0.1)";
+            ctx.lineWidth = 0.5;
+            ctx.arc(planetX, planetY, zoomScale * moon.orbitRadius, 0, 2 * Math.PI);
+            ctx.stroke();
+            const moonTheta = (2 * Math.PI * simulationTime) / moon.orbitalPeriod;
+            const moonX = planetX + zoomScale * moon.orbitRadius * Math.cos(moonTheta);
+            const moonY = planetY + zoomScale * moon.orbitRadius * Math.sin(moonTheta);
+            drawCircle(moonX, moonY, moon.size, moon.color);
+          });
+          // Draw the planet's label above it.
+          ctx.font = "12px sans-serif";
+          ctx.fillStyle = planet.color;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "bottom";
+          ctx.fillText(planet.name, planetX, planetY - zoomScale * planet.size - 5);
+        });
+
+        // Draw the asteroid belt.
+        solarSystem.asteroids.forEach((ast) => {
+          const angle = ast.baseAngle + simulationTime * ast.angularSpeed;
+          const x = solarSystem.centerX + zoomScale * ast.orbitRadius * Math.cos(angle);
+          const y = solarSystem.centerY + zoomScale * ast.orbitRadius * Math.sin(angle);
+          drawCircle(x, y, ast.size, ast.color);
+        });
+
+        // If two planets have been shift–selected, draw a dotted line between them and show the distance.
+        if (shiftSelectedPlanets.length === 2) {
+          const pos = shiftSelectedPlanets.map((index) => {
+            const planet = solarSystem.planets[index];
+            const theta = (2 * Math.PI * simulationTime) / planet.orbitalPeriod;
+            const a = planet.orbitRadius;
+            const b = a * Math.sqrt(1 - planet.ecc * planet.ecc);
+            return {
+              x: solarSystem.centerX + zoomScale * a * Math.cos(theta),
+              y: solarSystem.centerY + zoomScale * b * Math.sin(theta),
+            };
+          });
+          ctx.save();
+          ctx.setLineDash([5, 5]);
+          ctx.strokeStyle = "white";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(pos[0].x, pos[0].y);
+          ctx.lineTo(pos[1].x, pos[1].y);
+          ctx.stroke();
+          ctx.restore();
+          const dx = pos[1].x - pos[0].x;
+          const dy = pos[1].y - pos[0].y;
+          const pixelDistance = Math.hypot(dx, dy);
+          // Here, one simulation unit corresponds to the orbitRadius values (adjusted by zoomScale).
+          const simulationDistance = (pixelDistance / zoomScale).toFixed(1);
+          const midX = (pos[0].x + pos[1].x) / 2;
+          const midY = (pos[0].y + pos[1].y) / 2;
+          ctx.font = "12px sans-serif";
+          ctx.fillStyle = "white";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(simulationDistance + " units", midX, midY - 10);
+        }
+
+        requestAnimationFrame(animate);
+      }
+      animate();
+    </script>
+  </body>
+</html>

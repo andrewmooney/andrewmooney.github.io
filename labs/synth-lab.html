@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Synth Lab — How Synthesisers Work</title>
+<link rel="stylesheet" href="synth-lab.css">
+</head>
+<body>
+<div class="layout">
+
+<nav class="side" aria-label="Modules">
+  <a href="#m01">01 · Sound</a>
+  <a href="#m02">02 · Waveforms</a>
+  <a href="#m03">03 · Filter</a>
+  <a href="#m04">04 · Envelope</a>
+  <a href="#m05">05 · LFO</a>
+  <a href="#m06">06 · Mini Synth</a>
+  <a href="#m07">07 · Digital</a>
+  <a href="#m08">08 · FM</a>
+  <a href="#m09">09 · Wavetable</a>
+  <a href="#m10">10 · Granular</a>
+  <a href="#m11">11 · Families</a>
+  <a href="patch-bay.html">Patch Bay ↗</a>
+  <a href="dsp-lab.html">DSP Lab ↗</a>
+</nav>
+
+<div class="rack">
+
+<header>
+  <a class="backlink" href="/" style="font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;text-decoration:none;color:inherit;opacity:.7">&larr; Neuralcube</a>
+  <div class="brand">
+    <h1>Synth<span>·</span>Lab</h1>
+    <p>How synthesisers make sound — one module at a time. Pick a module from the menu and press Start. Every demo makes real sound in your browser.</p>
+  </div>
+</header>
+
+<!-- ============ MODULE 01 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 01 · Foundations</div>
+  <h2>What is sound?</h2>
+  <p>Sound is air wobbling back and forth. When anything vibrates — a guitar string, a speaker cone, your vocal cords — it shoves the air molecules next to it. Those molecules shove their neighbours, and a ripple of <strong>squashed and stretched air</strong> (a pressure wave) spreads outward at about 343 metres per second. No air, no sound: in space there is nothing to vibrate, so sound cannot travel at all.</p>
+  <div class="anim">
+    <svg id="propFig" viewBox="0 0 560 78" role="img" aria-label="A row of air particles. A compression travels left to right along the row, but the highlighted particle only wobbles in place around its dotted home mark."></svg>
+    <p class="figcap">The squeeze travels; the air doesn't. Watch the amber particle — it wobbles around its dotted home mark and never leaves, while the bunched-up region sweeps past it to the right.</p>
+  </div>
+  <p><strong>Frequency</strong> is how <strong>fast</strong> the air wobbles, measured in <strong>hertz (Hz)</strong> — wobbles per second. We hear frequency as <strong>pitch</strong>: 110 Hz is a low bass note, 880 Hz a high one. Double any frequency and you get the same note an <strong>octave</strong> higher — that's why 220 Hz and 440 Hz both sound like "A".</p>
+  <p><strong>Amplitude</strong> is how <strong>big</strong> the wobble is — how hard the air gets squashed. We hear amplitude as <strong>loudness</strong>. A whisper barely disturbs the air; a jet engine slams it. Loudness is usually measured in <strong>decibels (dB)</strong>, and sounds above about 85 dB slowly damage hearing — which is why the volume in this lab is capped.</p>
+  <h2>How your ears hear it</h2>
+  <p>Your ear is a chain of tiny machines that turns air pressure into nerve signals:</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Outer ear</h3>
+      <ul>
+        <li><b>Pinna:</b> the visible ear funnels the wave inward</li>
+        <li><b>Eardrum:</b> a skin membrane that vibrates in step with the air — same frequency, same relative amplitude</li>
+      </ul>
+      <div class="ex">catches the wobble</div>
+    </div>
+    <div class="card">
+      <h3>Middle ear</h3>
+      <ul>
+        <li><b>Ossicles:</b> the three smallest bones in your body (hammer, anvil, stirrup)</li>
+        <li><b>Job:</b> lever the eardrum's wobble and pass it on, roughly 20× stronger</li>
+      </ul>
+      <div class="ex">amplifies it</div>
+    </div>
+    <div class="card">
+      <h3>Inner ear</h3>
+      <ul>
+        <li><b>Cochlea:</b> a fluid-filled spiral lined with thousands of hair cells</li>
+        <li><b>Job:</b> each spot responds to one frequency — high near the entrance, low at the tip — a built-in spectrum analyser</li>
+      </ul>
+      <div class="ex">converts it to nerve signals</div>
+    </div>
+  </div>
+  <p style="margin-top:12px">Healthy young ears hear roughly <strong>20 Hz to 20,000 Hz</strong>; the top end falls with age (and with loud headphones — hair cells don't grow back). The slider below covers 55–880 Hz, the range where most music lives.</p>
+  <p>A synthesiser is just a machine that creates and shapes these wobbles with electricity instead of a string or a drum skin. The scope below shows the wave your speaker is pushing into the air: frequency on the x-axis timing, amplitude on the y-axis height.</p>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>A pure tone is <em>y</em>(<em>t</em>) = <em>A</em>·sin(2π<em>f</em><em>t</em>): <em>A</em> is the amplitude, <em>f</em> the frequency in hertz, and 2π<em>f</em><em>t</em> the phase — how far around one wobble cycle you are at time <em>t</em>. Sound travels at about 343 m/s, so a wave&rsquo;s physical length is λ = 343/<em>f</em> metres: a 110 Hz bass wave is over 3 m long; a 10 kHz hiss just 3.4 cm. Loudness in decibels compares two amplitudes: dB = 20·log₁₀(<em>A</em>/<em>A</em>₀) — every 6 dB is a doubling.</p>
+    <svg class="mathfig" viewBox="0 0 560 210" role="img" aria-label="One sine cycle with amplitude A and period T labelled" xmlns="http://www.w3.org/2000/svg"><line x1="40" y1="105" x2="520" y2="105" stroke="#DFE4EB" stroke-width="1.5"/><path d="M40.0,105.0 L44.0,98.5 L48.0,92.1 L52.0,85.8 L56.0,79.8 L60.0,74.0 L64.0,68.6 L68.0,63.5 L72.0,58.9 L76.0,54.8 L80.0,51.3 L84.0,48.4 L88.0,46.0 L92.0,44.4 L96.0,43.3 L100.0,43.0 L104.0,43.3 L108.0,44.4 L112.0,46.0 L116.0,48.4 L120.0,51.3 L124.0,54.8 L128.0,58.9 L132.0,63.5 L136.0,68.6 L140.0,74.0 L144.0,79.8 L148.0,85.8 L152.0,92.1 L156.0,98.5 L160.0,105.0 L164.0,111.5 L168.0,117.9 L172.0,124.2 L176.0,130.2 L180.0,136.0 L184.0,141.4 L188.0,146.5 L192.0,151.1 L196.0,155.2 L200.0,158.7 L204.0,161.6 L208.0,164.0 L212.0,165.6 L216.0,166.7 L220.0,167.0 L224.0,166.7 L228.0,165.6 L232.0,164.0 L236.0,161.6 L240.0,158.7 L244.0,155.2 L248.0,151.1 L252.0,146.5 L256.0,141.4 L260.0,136.0 L264.0,130.2 L268.0,124.2 L272.0,117.9 L276.0,111.5 L280.0,105.0 L284.0,98.5 L288.0,92.1 L292.0,85.8 L296.0,79.8 L300.0,74.0 L304.0,68.6 L308.0,63.5 L312.0,58.9 L316.0,54.8 L320.0,51.3 L324.0,48.4 L328.0,46.0 L332.0,44.4 L336.0,43.3 L340.0,43.0 L344.0,43.3 L348.0,44.4 L352.0,46.0 L356.0,48.4 L360.0,51.3 L364.0,54.8 L368.0,58.9 L372.0,63.5 L376.0,68.6 L380.0,74.0 L384.0,79.8 L388.0,85.8 L392.0,92.1 L396.0,98.5 L400.0,105.0 L404.0,111.5 L408.0,117.9 L412.0,124.2 L416.0,130.2 L420.0,136.0 L424.0,141.4 L428.0,146.5 L432.0,151.1 L436.0,155.2 L440.0,158.7 L444.0,161.6 L448.0,164.0 L452.0,165.6 L456.0,166.7 L460.0,167.0 L464.0,166.7 L468.0,165.6 L472.0,164.0 L476.0,161.6 L480.0,158.7 L484.0,155.2 L488.0,151.1 L492.0,146.5 L496.0,141.4 L500.0,136.0 L504.0,130.2 L508.0,124.2 L512.0,117.9 L516.0,111.5 L520.0,105.0" fill="none" stroke="#059669" stroke-width="2.5"/><line x1="100" y1="105" x2="100" y2="43" stroke="#B45309" stroke-width="2" marker-end="none"/><line x1="95" y1="43" x2="105" y2="43" stroke="#B45309" stroke-width="2"/><text x="114" y="74.0" fill="#B45309" font-size="12" text-anchor="start" font-family="system-ui" ><tspan font-style="italic">A</tspan> — amplitude</text><path d="M40,185 v8 h240 v-8" fill="none" stroke="#5B6572" stroke-width="1.5"/><text x="160" y="209" fill="#5B6572" font-size="12" text-anchor="middle" font-family="system-ui" >one cycle · time T = 1/<tspan font-style="italic">f</tspan> seconds</text><text x="40" y="29" fill="#5B6572" font-size="11" text-anchor="middle" font-family="system-ui" >+1</text><text x="40" y="179" fill="#5B6572" font-size="11" text-anchor="middle" font-family="system-ui" >−1</text><text x="526" y="109" fill="#5B6572" font-size="11" text-anchor="start" font-family="system-ui" >time →</text></svg>
+    <p class="figcap">One wobble, anatomically: height is amplitude, width is the period — and frequency is how many of these fit into each second.</p>
+    <p><b>Reading it:</b> italic letters are quantities that can vary — <em>y</em>(<em>t</em>) means &ldquo;the air pressure <em>y</em> at time <em>t</em>&rdquo;, a function: feed in a time, get back a value. sin() repeats every 2π because angles are measured in radians, where 2π is one full circle; multiplying by <em>f</em><em>t</em> asks &ldquo;how many circles has this wave completed by time <em>t</em>?&rdquo;. <em>A</em> just scales the height. log₁₀ is &ldquo;how many times must I multiply 10?&rdquo; — it turns huge loudness ratios into small, ear-like numbers.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Pick a moment in time — say <em>t</em> = 0.5 seconds — and a pitch, <em>f</em> = 220 wobbles per second.</li>
+      <li>Multiply them: 220 × 0.5 = 110. By half a second, the wave has completed 110 full wobbles.</li>
+      <li>Multiply by 2π (about 6.28) to turn &ldquo;wobbles completed&rdquo; into an angle, because sin() thinks in angles: 110 × 6.28 ≈ 691 radians.</li>
+      <li>sin() of that angle gives one number between −1 and +1 — where in its wobble the wave is right now.</li>
+      <li>Multiply by <em>A</em> (say 0.4) to set the loudness: the answer, about −0.35 to +0.35, is one air-pressure value.</li>
+      <li>Your speaker does this whole recipe 48,000 times every second, once per sample. That stream of numbers IS the sound.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope1"></canvas>
+    <div class="btnrow"><button class="pad run" id="run1" aria-pressed="false">Start</button></div>
+    <div class="controls">
+      <div class="ctl"><label for="freq1">Frequency</label><input type="range" id="freq1" min="55" max="880" value="220" step="1"><output id="freq1o">220 Hz</output></div>
+      <div class="ctl"><label for="gain1">Amplitude</label><input type="range" id="gain1" min="0" max="40" value="20" step="1"><output id="gain1o">20 %</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Slide the frequency down to 55 Hz and up to 880 Hz. Watch the wave squash together as pitch rises — more wobbles per second.</div>
+  </div>
+  <h2 style="margin-top:22px">Record your own wave</h2>
+  <p>Your voice is a pressure wave too. Record a few seconds and see what it looks like.</p>
+  <div class="demo">
+    <canvas class="scope" id="voice1" style="height:220px;touch-action:none;cursor:crosshair"></canvas>
+    <canvas class="scope" id="voiceSpec1" style="height:70px"></canvas>
+    <p class="hint">Press Play back to see the live spectrum — the frequencies your voice is made of. Vowels show a stack of harmonic bars; a hiss smears across everything.</p>
+    <div class="btnrow">
+      <button class="pad" id="rec1" aria-pressed="false">● Record (3 s)</button>
+      <button class="pad" id="play1" disabled>Play back</button>
+      <button class="pad" id="zoom1" disabled>Reset zoom</button>
+    </div>
+    <p class="hint" id="recHint1">Press Record and say something — the whole clip appears as one waveform. Drag across it to zoom in.</p>
+    <div class="try"><b>Try this</b>Record yourself singing "aaah", then drag to zoom right in on it. Keep zooming: the messy shape becomes a clean repeating wave — that repetition is your pitch. Now record a hiss ("sssss") and zoom in: no repetition, just random fuzz. That's why noise has no note.</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 02 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 02 · Oscillator (VCO)</div>
+  <h2>Waveforms — the raw ingredients</h2>
+  <p>The <strong>oscillator</strong> is where sound starts. It repeats a shape over and over. The shape decides the <strong>timbre</strong> (tone colour), because every shape is really a recipe of pure sine waves stacked on top of each other — called <strong>harmonics</strong>.</p>
+  <p><strong>Sine</strong> = one pure tone, no extras. <strong>Triangle</strong> = mellow, a few quiet harmonics. <strong>Square</strong> = hollow, odd harmonics only (think game consoles). <strong>Sawtooth</strong> = bright and buzzy, every harmonic — the classic synth sound.</p>
+  <div class="anim">
+    <svg id="stackFig" viewBox="0 0 560 150" role="img" aria-label="A pure sine wave gains harmonics one at a time and gradually sharpens into a sawtooth."></svg>
+    <p class="figcap">The recipe assembling itself: start from one pure sine, stack in harmonic after harmonic, and watch the smooth curve sharpen into a buzzy sawtooth — then it empties out and builds again.</p>
+  </div>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>Fourier&rsquo;s theorem: any repeating wave is a sum of sines at whole-number multiples of the fundamental. Saw: <em>y</em> = Σ sin(2π<em>kft</em>)/<em>k</em> for <em>k</em> = 1,2,3,… Square: the same but odd <em>k</em> only. Triangle: odd <em>k</em> with amplitudes 1/<em>k</em>² and alternating sign — the 1/<em>k</em>² decay is why it sounds so much mellower than the square&rsquo;s 1/<em>k</em>.</p>
+    <svg class="mathfig" viewBox="0 0 560 300" role="img" aria-label="Three sine harmonics and their sum forming a sawtooth-like wave" xmlns="http://www.w3.org/2000/svg"><line x1="150" y1="34" x2="520" y2="34" stroke="#DFE4EB"/><path d="M150.0,34.0 L153.0,32.0 L156.0,30.0 L159.0,28.0 L162.0,26.1 L165.0,24.2 L168.0,22.5 L171.0,20.9 L174.0,19.4 L177.0,18.1 L180.0,17.0 L183.0,16.0 L186.0,15.2 L189.0,14.6 L192.0,14.2 L195.0,14.0 L198.0,14.0 L201.0,14.3 L204.0,14.7 L207.0,15.3 L210.0,16.1 L213.0,17.1 L216.0,18.3 L219.0,19.7 L222.0,21.2 L225.0,22.8 L228.0,24.5 L231.0,26.4 L234.0,28.3 L237.0,30.3 L240.0,32.3 L243.0,34.3 L246.0,36.4 L249.0,38.4 L252.0,40.3 L255.0,42.2 L258.0,44.0 L261.0,45.8 L264.0,47.3 L267.0,48.8 L270.0,50.1 L273.0,51.2 L276.0,52.2 L279.0,52.9 L282.0,53.5 L285.0,53.8 L288.0,54.0 L291.0,53.9 L294.0,53.7 L297.0,53.2 L300.0,52.6 L303.0,51.7 L306.0,50.7 L309.0,49.5 L312.0,48.1 L315.0,46.6 L318.0,44.9 L321.0,43.2 L324.0,41.3 L327.0,39.4 L330.0,37.4 L333.0,35.4 L336.0,33.3 L339.0,31.3 L342.0,29.3 L345.0,27.3 L348.0,25.5 L351.0,23.7 L354.0,22.0 L357.0,20.4 L360.0,19.0 L363.0,17.7 L366.0,16.6 L369.0,15.7 L372.0,15.0 L375.0,14.4 L378.0,14.1 L381.0,14.0 L384.0,14.1 L387.0,14.4 L390.0,14.9 L393.0,15.6 L396.0,16.5 L399.0,17.5 L402.0,18.8 L405.0,20.2 L408.0,21.7 L411.0,23.4 L414.0,25.1 L417.0,27.0 L420.0,29.0 L423.0,31.0 L426.0,33.0 L429.0,35.0 L432.0,37.0 L435.0,39.0 L438.0,41.0 L441.0,42.9 L444.0,44.6 L447.0,46.3 L450.0,47.8 L453.0,49.2 L456.0,50.5 L459.0,51.5 L462.0,52.4 L465.0,53.1 L468.0,53.6 L471.0,53.9 L474.0,54.0 L477.0,53.9 L480.0,53.6 L483.0,53.0 L486.0,52.3 L489.0,51.4 L492.0,50.3 L495.0,49.0 L498.0,47.6 L501.0,46.0 L504.0,44.3 L507.0,42.5 L510.0,40.7 L513.0,38.7 L516.0,36.7 L519.0,34.7" fill="none" stroke="#5B6572" stroke-width="1.8"/><text x="142" y="38" fill="#5B6572" font-size="11" text-anchor="end" font-family="system-ui" >harmonic 1 · volume 1</text><line x1="150" y1="92" x2="520" y2="92" stroke="#DFE4EB"/><path d="M150.0,92.0 L153.0,90.0 L156.0,88.0 L159.0,86.3 L162.0,84.7 L165.0,83.5 L168.0,82.6 L171.0,82.1 L174.0,82.0 L177.0,82.3 L180.0,83.1 L183.0,84.2 L186.0,85.6 L189.0,87.3 L192.0,89.2 L195.0,91.2 L198.0,93.2 L201.0,95.2 L204.0,97.0 L207.0,98.7 L210.0,100.0 L213.0,101.1 L216.0,101.7 L219.0,102.0 L222.0,101.8 L225.0,101.3 L228.0,100.3 L231.0,99.0 L234.0,97.5 L237.0,95.6 L240.0,93.7 L243.0,91.7 L246.0,89.6 L249.0,87.7 L252.0,86.0 L255.0,84.5 L258.0,83.3 L261.0,82.5 L264.0,82.1 L267.0,82.0 L270.0,82.4 L273.0,83.2 L276.0,84.4 L279.0,85.9 L282.0,87.6 L285.0,89.5 L288.0,91.5 L291.0,93.5 L294.0,95.5 L297.0,97.3 L300.0,98.9 L303.0,100.2 L306.0,101.2 L309.0,101.8 L312.0,102.0 L315.0,101.8 L318.0,101.1 L321.0,100.1 L324.0,98.8 L327.0,97.2 L330.0,95.3 L333.0,93.4 L336.0,91.3 L339.0,89.3 L342.0,87.4 L345.0,85.7 L348.0,84.3 L351.0,83.1 L354.0,82.4 L357.0,82.0 L360.0,82.1 L363.0,82.5 L366.0,83.4 L369.0,84.6 L372.0,86.1 L375.0,87.9 L378.0,89.8 L381.0,91.8 L384.0,93.9 L387.0,95.8 L390.0,97.6 L393.0,99.2 L396.0,100.4 L399.0,101.3 L402.0,101.9 L405.0,102.0 L408.0,101.7 L411.0,101.0 L414.0,99.9 L417.0,98.5 L420.0,96.9 L423.0,95.0 L426.0,93.0 L429.0,91.0 L432.0,89.0 L435.0,87.1 L438.0,85.5 L441.0,84.1 L444.0,83.0 L447.0,82.3 L450.0,82.0 L453.0,82.1 L456.0,82.7 L459.0,83.6 L462.0,84.8 L465.0,86.4 L468.0,88.2 L471.0,90.1 L474.0,92.2 L477.0,94.2 L480.0,96.1 L483.0,97.9 L486.0,99.4 L489.0,100.6 L492.0,101.5 L495.0,101.9 L498.0,102.0 L501.0,101.6 L504.0,100.9 L507.0,99.7 L510.0,98.3 L513.0,96.6 L516.0,94.7 L519.0,92.7" fill="none" stroke="#5B6572" stroke-width="1.8"/><text x="142" y="96" fill="#5B6572" font-size="11" text-anchor="end" font-family="system-ui" >harmonic 2 · volume 1/2</text><line x1="150" y1="150" x2="520" y2="150" stroke="#DFE4EB"/><path d="M150.0,150.0 L153.0,148.0 L156.0,146.2 L159.0,144.7 L162.0,143.7 L165.0,143.3 L168.0,143.6 L171.0,144.4 L174.0,145.7 L177.0,147.5 L180.0,149.4 L183.0,151.5 L186.0,153.3 L189.0,154.9 L192.0,156.0 L195.0,156.6 L198.0,156.6 L201.0,155.9 L204.0,154.7 L207.0,153.0 L210.0,151.1 L213.0,149.1 L216.0,147.2 L219.0,145.5 L222.0,144.2 L225.0,143.5 L228.0,143.4 L231.0,143.9 L234.0,144.9 L237.0,146.5 L240.0,148.3 L243.0,150.3 L246.0,152.3 L249.0,154.1 L252.0,155.5 L255.0,156.4 L258.0,156.7 L261.0,156.3 L264.0,155.4 L267.0,154.0 L270.0,152.2 L273.0,150.2 L276.0,148.2 L279.0,146.4 L282.0,144.9 L285.0,143.8 L288.0,143.4 L291.0,143.5 L294.0,144.3 L297.0,145.6 L300.0,147.3 L303.0,149.2 L306.0,151.2 L309.0,153.1 L312.0,154.8 L315.0,155.9 L318.0,156.6 L321.0,156.6 L324.0,156.0 L327.0,154.8 L330.0,153.2 L333.0,151.3 L336.0,149.3 L339.0,147.4 L342.0,145.6 L345.0,144.3 L348.0,143.5 L351.0,143.4 L354.0,143.8 L357.0,144.8 L360.0,146.3 L363.0,148.1 L366.0,150.1 L369.0,152.1 L372.0,153.9 L375.0,155.4 L378.0,156.3 L381.0,156.7 L384.0,156.4 L387.0,155.5 L390.0,154.2 L393.0,152.4 L396.0,150.5 L399.0,148.4 L402.0,146.6 L405.0,145.0 L408.0,143.9 L411.0,143.4 L414.0,143.5 L417.0,144.2 L420.0,145.4 L423.0,147.1 L426.0,149.0 L429.0,151.0 L432.0,152.9 L435.0,154.6 L438.0,155.8 L441.0,156.5 L444.0,156.6 L447.0,156.1 L450.0,155.0 L453.0,153.4 L456.0,151.6 L459.0,149.5 L462.0,147.6 L465.0,145.8 L468.0,144.5 L471.0,143.6 L474.0,143.3 L477.0,143.7 L480.0,144.6 L483.0,146.1 L486.0,147.9 L489.0,149.9 L492.0,151.9 L495.0,153.7 L498.0,155.2 L501.0,156.2 L504.0,156.6 L507.0,156.5 L510.0,155.7 L513.0,154.4 L516.0,152.6 L519.0,150.7" fill="none" stroke="#5B6572" stroke-width="1.8"/><text x="142" y="154" fill="#5B6572" font-size="11" text-anchor="end" font-family="system-ui" >harmonic 3 · volume 1/3</text><text x="280" y="206" fill="#1C2431" font-size="12" text-anchor="middle" font-family="system-ui" >+ add them all, sample by sample</text><line x1="150" y1="252" x2="520" y2="252" stroke="#DFE4EB"/><path d="M150.0,252.0 L152.0,247.5 L154.0,243.2 L156.0,239.0 L158.0,235.1 L160.0,231.6 L162.0,228.4 L164.0,225.8 L166.0,223.7 L168.0,222.0 L170.0,221.0 L172.0,220.4 L174.0,220.4 L176.0,220.8 L178.0,221.7 L180.0,222.9 L182.0,224.4 L184.0,226.1 L186.0,228.0 L188.0,230.0 L190.0,231.9 L192.0,233.8 L194.0,235.6 L196.0,237.2 L198.0,238.6 L200.0,239.8 L202.0,240.7 L204.0,241.5 L206.0,242.0 L208.0,242.3 L210.0,242.5 L212.0,242.5 L214.0,242.5 L216.0,242.4 L218.0,242.3 L220.0,242.3 L222.0,242.4 L224.0,242.6 L226.0,242.9 L228.0,243.5 L230.0,244.2 L232.0,245.1 L234.0,246.2 L236.0,247.4 L238.0,248.7 L240.0,250.2 L242.0,251.6 L244.0,253.1 L246.0,254.6 L248.0,256.0 L250.0,257.2 L252.0,258.4 L254.0,259.4 L256.0,260.2 L258.0,260.8 L260.0,261.3 L262.0,261.5 L264.0,261.7 L266.0,261.7 L268.0,261.7 L270.0,261.6 L272.0,261.5 L274.0,261.5 L276.0,261.6 L278.0,261.8 L280.0,262.2 L282.0,262.9 L284.0,263.7 L286.0,264.8 L288.0,266.1 L290.0,267.6 L292.0,269.3 L294.0,271.1 L296.0,273.1 L298.0,275.0 L300.0,276.9 L302.0,278.7 L304.0,280.4 L306.0,281.7 L308.0,282.8 L310.0,283.4 L312.0,283.6 L314.0,283.4 L316.0,282.6 L318.0,281.2 L320.0,279.3 L322.0,276.9 L324.0,274.0 L326.0,270.7 L328.0,267.0 L330.0,262.9 L332.0,258.7 L334.0,254.2 L336.0,249.8 L338.0,245.3 L340.0,241.1 L342.0,237.0 L344.0,233.3 L346.0,230.0 L348.0,227.1 L350.0,224.7 L352.0,222.8 L354.0,221.4 L356.0,220.6 L358.0,220.4 L360.0,220.6 L362.0,221.2 L364.0,222.3 L366.0,223.6 L368.0,225.3 L370.0,227.1 L372.0,229.0 L374.0,230.9 L376.0,232.9 L378.0,234.7 L380.0,236.4 L382.0,237.9 L384.0,239.2 L386.0,240.3 L388.0,241.1 L390.0,241.8 L392.0,242.2 L394.0,242.4 L396.0,242.5 L398.0,242.5 L400.0,242.4 L402.0,242.3 L404.0,242.3 L406.0,242.3 L408.0,242.5 L410.0,242.7 L412.0,243.2 L414.0,243.8 L416.0,244.6 L418.0,245.6 L420.0,246.8 L422.0,248.0 L424.0,249.4 L426.0,250.9 L428.0,252.4 L430.0,253.8 L432.0,255.3 L434.0,256.6 L436.0,257.8 L438.0,258.9 L440.0,259.8 L442.0,260.5 L444.0,261.1 L446.0,261.4 L448.0,261.6 L450.0,261.7 L452.0,261.7 L454.0,261.6 L456.0,261.5 L458.0,261.5 L460.0,261.5 L462.0,261.7 L464.0,262.0 L466.0,262.5 L468.0,263.3 L470.0,264.2 L472.0,265.4 L474.0,266.8 L476.0,268.4 L478.0,270.2 L480.0,272.1 L482.0,274.0 L484.0,276.0 L486.0,277.9 L488.0,279.6 L490.0,281.1 L492.0,282.3 L494.0,283.2 L496.0,283.6 L498.0,283.6 L500.0,283.0 L502.0,282.0 L504.0,280.3 L506.0,278.2 L508.0,275.6 L510.0,272.4 L512.0,268.9 L514.0,265.0 L516.0,260.8 L518.0,256.5 L520.0,252.0" fill="none" stroke="#059669" stroke-width="2.5"/><text x="142" y="256" fill="#059669" font-size="11" text-anchor="end" font-family="system-ui" >the sum — already saw-shaped</text></svg>
+    <p class="figcap">Three sines, each faster and quieter than the last — added together they are already turning into a sawtooth.</p>
+    <p><b>Reading it:</b> Σ (capital sigma) means &ldquo;add up one copy of this expression for each value of <em>k</em>&rdquo;. Here <em>k</em> counts harmonics: <em>k</em> = 1 is the fundamental, <em>k</em> = 2 twice its frequency, and so on. Each term sin(2π<em>kft</em>)/<em>k</em> is a sine at <em>k</em>-times the pitch, divided by <em>k</em> so higher harmonics get quieter. Writing 1/<em>k</em>² means dividing by <em>k</em>·<em>k</em> — a much faster fade.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Start with one sine at the pitch you want — say 110 Hz, at full volume. That is harmonic <em>k</em> = 1.</li>
+      <li>Add a second sine at twice the frequency (220 Hz) but at half the volume (1/2). That is <em>k</em> = 2.</li>
+      <li>Add a third at three times the frequency (330 Hz) at a third of the volume (1/3). Keep going: <em>k</em> = 4, 5, 6…</li>
+      <li>At every moment, add all their values together into one number. Do that for every sample.</li>
+      <li>The result stops looking like a smooth sine — with enough harmonics it becomes the jagged sawtooth. Leave out the even-numbered ones and it becomes a square instead.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope2"></canvas>
+    <canvas class="scope" id="spec2" style="height:70px"></canvas>
+    <p class="hint">Top: the waveform. Bottom: its harmonic spectrum — each bar is one pure sine hiding inside the shape.</p>
+    <div class="btnrow" id="waveBtns">
+      <button class="pad" data-wave="sine" aria-pressed="true">Sine</button>
+      <button class="pad" data-wave="triangle" aria-pressed="false">Triangle</button>
+      <button class="pad" data-wave="square" aria-pressed="false">Square</button>
+      <button class="pad" data-wave="sawtooth" aria-pressed="false">Saw</button>
+      <button class="pad run" id="run2" aria-pressed="false">Start</button>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="freq2">Frequency</label><input type="range" id="freq2" min="55" max="440" value="110" step="1"><output id="freq2o">110 Hz</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Switch between shapes while it plays. Which one sounds like an old video game? Which sounds most like a flute?</div>
+  </div>
+  <h2 style="margin-top:22px">Build a wave from sines</h2>
+  <p>You can test this idea for yourself. Below, you start with <strong>one pure sine</strong> and stack its harmonics on top, one by one. Watch the smooth curve grow corners and turn into a square or a saw, and listen to the tone sharpen as each harmonic lands.</p>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>The partial sum <em>S</em><sub><em>N</em></sub>(<em>t</em>) = Σ<sub><em>k</em>=1..<em>N</em></sub> <em>a</em><sub><em>k</em></sub> sin(2π<em>kft</em>) approaches the target shape as <em>N</em> grows, but near a sharp corner it always overshoots by about 9% no matter how large <em>N</em> gets — the Gibbs phenomenon. A truly sharp edge needs infinite harmonics, which is also why digital systems band-limit their waveforms: harmonics above half the sample rate would alias.</p>
+    <p><b>Reading it:</b> the subscript in <em>S</em><sub><em>N</em></sub> is a label, not a multiplication — it names &ldquo;the sum using the first <em>N</em> terms&rdquo;. As you drag the slider you are literally changing <em>N</em>. &ldquo;Overshoots by 9%&rdquo; means the wiggle right at the corner pokes about 9% past the target height — watch for it on the screen at high <em>N</em>.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Set the slider to <em>N</em> = 1: you hear and see one pure sine. That is the whole sum so far.</li>
+      <li>Move to <em>N</em> = 2: the machine adds the second harmonic (if this shape uses it) on top. The shape bends.</li>
+      <li>Every step up adds exactly one more sine to the pile — nothing else changes.</li>
+      <li>Watch the corners: they get sharper and sharper but never perfect, and right beside each corner a little overshoot wiggle appears — about 9% too tall, no matter how high you push <em>N</em>.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope2b"></canvas>
+    <canvas class="scope" id="spec2b" style="height:70px"></canvas>
+    <p class="hint">Dim line: the lone fundamental. Green line: the sum of all the sines so far.</p>
+    <div class="btnrow" id="targ2b">
+      <button class="pad" data-t="square" aria-pressed="true">→ Square</button>
+      <button class="pad" data-t="sawtooth" aria-pressed="false">→ Saw</button>
+      <button class="pad" data-t="triangle" aria-pressed="false">→ Triangle</button>
+      <button class="pad run" id="run2b" aria-pressed="false">Start</button>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="n2b">Harmonics</label><input type="range" id="n2b" min="1" max="16" value="1" step="1"><output id="n2bo">1 — pure sine</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Aim at Square and drag the harmonics up slowly from 1. At 2 nothing changes (squares only use odd harmonics); at 3 the shape dents; by 9 it's clearly boxy. The corners never get perfectly sharp — a true square needs infinitely many sines. Now try Triangle: why does it stay so much smoother? (Look how quickly its harmonics shrink in the spectrum.)</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 03 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 03 · Filter (VCF)</div>
+  <h2>Filters — sculpting the tone</h2>
+  <p>A <strong>low-pass filter</strong> lets low frequencies through and cuts off the high ones above the <strong>cutoff</strong> point. It's like putting a blanket over a speaker. Sweeping the cutoff up and down makes the famous "wah" sound of dance music.</p>
+  <p><strong>Resonance</strong> boosts frequencies right at the cutoff, giving a whistly, squelchy edge. This one filter circuit — invented by Bob Moog in 1965 — defined the sound of synthesisers.</p>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>The filter obeys a difference equation: <em>y</em>[<em>n</em>] = <em>b</em>₀<em>x</em>[<em>n</em>] + <em>b</em>₁<em>x</em>[<em>n</em>−1] + <em>b</em>₂<em>x</em>[<em>n</em>−2] − <em>a</em>₁<em>y</em>[<em>n</em>−1] − <em>a</em>₂<em>y</em>[<em>n</em>−2]: each output sample is a recipe of recent inputs and its own recent outputs. That feedback is what makes the response frequency-dependent. This &ldquo;biquad&rdquo; rolls off at 12 dB per octave above the cutoff — each octave up loses three-quarters of its amplitude. <em>Q</em> (resonance) is the peak gain at the cutoff; high <em>Q</em> means the feedback almost sings by itself.</p>
+    <svg class="mathfig" viewBox="0 0 560 210" role="img" aria-label="Low-pass filter response with cutoff, resonance bump and rolloff slope labelled" xmlns="http://www.w3.org/2000/svg"><line x1="50" y1="170" x2="530" y2="170" stroke="#DFE4EB" stroke-width="1.5"/><line x1="50" y1="20" x2="50" y2="170" stroke="#DFE4EB" stroke-width="1.5"/><path d="M50.0,60.0 L53.0,60.0 L56.0,60.0 L59.0,60.0 L62.0,60.0 L65.0,60.0 L68.0,60.0 L71.0,60.0 L74.0,60.0 L77.0,60.0 L80.0,60.0 L83.0,60.0 L86.0,60.0 L89.0,60.0 L92.0,60.0 L95.0,60.0 L98.0,60.0 L101.0,60.0 L104.0,60.0 L107.0,60.0 L110.0,60.0 L113.0,60.0 L116.0,60.0 L119.0,60.0 L122.0,60.0 L125.0,60.0 L128.0,60.0 L131.0,60.0 L134.0,60.0 L137.0,60.0 L140.0,60.0 L143.0,60.0 L146.0,60.0 L149.0,60.0 L152.0,60.0 L155.0,60.0 L158.0,60.0 L161.0,60.0 L164.0,60.0 L167.0,60.0 L170.0,60.0 L173.0,60.0 L176.0,60.0 L179.0,60.0 L182.0,60.0 L185.0,60.0 L188.0,60.0 L191.0,60.0 L194.0,60.0 L197.0,60.0 L200.0,60.0 L203.0,60.0 L206.0,60.0 L209.0,60.0 L212.0,60.0 L215.0,60.0 L218.0,60.0 L221.0,60.0 L224.0,60.0 L227.0,60.0 L230.0,60.0 L233.0,60.0 L236.0,60.0 L239.0,60.0 L242.0,60.0 L245.0,60.0 L248.0,60.0 L251.0,60.0 L254.0,60.0 L257.0,60.0 L260.0,60.0 L263.0,56.7 L266.0,53.5 L269.0,50.3 L272.0,47.3 L275.0,44.4 L278.0,41.8 L281.0,39.4 L284.0,37.3 L287.0,35.6 L290.0,34.1 L293.0,33.1 L296.0,32.3 L299.0,32.0 L302.0,33.2 L305.0,35.1 L308.0,37.0 L311.0,38.8 L314.0,40.7 L317.0,42.5 L320.0,44.4 L323.0,46.3 L326.0,48.1 L329.0,50.0 L332.0,51.8 L335.0,53.7 L338.0,55.6 L341.0,57.4 L344.0,59.3 L347.0,61.1 L350.0,63.0 L353.0,64.9 L356.0,66.7 L359.0,68.6 L362.0,70.4 L365.0,72.3 L368.0,74.2 L371.0,76.0 L374.0,77.9 L377.0,79.7 L380.0,81.6 L383.0,83.5 L386.0,85.3 L389.0,87.2 L392.0,89.0 L395.0,90.9 L398.0,92.8 L401.0,94.6 L404.0,96.5 L407.0,98.3 L410.0,100.2 L413.0,102.1 L416.0,103.9 L419.0,105.8 L422.0,107.6 L425.0,109.5 L428.0,111.4 L431.0,113.2 L434.0,115.1 L437.0,116.9 L440.0,118.8 L443.0,120.7 L446.0,122.5 L449.0,124.4 L452.0,126.2 L455.0,128.1 L458.0,130.0 L461.0,131.8 L464.0,133.7 L467.0,135.5 L470.0,137.4 L473.0,139.3 L476.0,141.1 L479.0,143.0 L482.0,144.8 L485.0,146.7 L488.0,148.6 L491.0,150.4 L494.0,152.3 L497.0,154.1 L500.0,156.0 L503.0,157.9 L506.0,159.7 L509.0,161.6 L512.0,163.4 L515.0,165.3 L518.0,167.2 L521.0,169.0 L524.0,170.0 L527.0,170.0 L530.0,170.0" fill="none" stroke="#059669" stroke-width="2.5"/><line x1="300" y1="170" x2="300" y2="26" stroke="#B45309" stroke-width="1.5" stroke-dasharray="5 4"/><text x="300" y="190" fill="#B45309" font-size="12" text-anchor="middle" font-family="system-ui" >cutoff frequency</text><text x="292" y="24" fill="#B45309" font-size="11" text-anchor="end" font-family="system-ui" >resonance bump (Q)</text><text x="430" y="80" fill="#5B6572" font-size="11" text-anchor="middle" font-family="system-ui" >−12 dB per octave</text><path d="M390,96 L470,146" stroke="#5B6572" stroke-width="1.2" marker-end="none"/><text x="46" y="16" fill="#5B6572" font-size="11" text-anchor="end" font-family="system-ui" >loud</text><text x="46" y="168" fill="#5B6572" font-size="11" text-anchor="end" font-family="system-ui" >quiet</text><text x="290" y="206" fill="#5B6572" font-size="11" text-anchor="middle" font-family="system-ui" >frequency →</text></svg>
+    <p class="figcap">What the filter does to each frequency: below the cutoff, through untouched; at the cutoff, boosted by resonance; above it, fading fast.</p>
+    <p><b>Reading it:</b> square brackets mean samples, not seconds: <em>y</em>[<em>n</em>] is output sample number <em>n</em>, and <em>y</em>[<em>n</em>−1] is simply &ldquo;the previous output sample&rdquo;. The letters <em>b</em>₀, <em>b</em>₁, <em>a</em>₁… are fixed mixing amounts (coefficients) chosen from your cutoff and Q — the whole filter is five multiplications and four additions per sample.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>To make output sample number 100, the filter gathers five numbers: input samples 100, 99 and 98, and its own earlier answers — output samples 99 and 98.</li>
+      <li>Each is multiplied by its own fixed amount (the <em>b</em> and <em>a</em> coefficients — chosen once from your cutoff and resonance knobs).</li>
+      <li>Add the input parts, subtract the output parts. That single number is output sample 100.</li>
+      <li>Slide forward one sample and repeat, forever — 48,000 times a second.</li>
+      <li>The magic is the &ldquo;own earlier answers&rdquo; part: because the filter feeds itself back, some frequencies build up and others cancel. That is all a filter is.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope3"></canvas>
+    <div class="btnrow"><button class="pad run" id="run3" aria-pressed="false">Start</button></div>
+    <div class="controls">
+      <div class="ctl"><label for="cut3">Cutoff</label><input type="range" id="cut3" min="0" max="100" value="70" step="1"><output id="cut3o">1.9 kHz</output></div>
+      <div class="ctl"><label for="res3">Resonance</label><input type="range" id="res3" min="0" max="25" value="4" step="0.5"><output id="res3o">Q 4.0</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Start with cutoff fully up, then slowly sweep it down while a saw wave plays. Hear the brightness drain away? Now add resonance and sweep again.</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 04 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 04 · Envelope (EG)</div>
+  <h2>Envelopes — shaping loudness over time</h2>
+  <p>Real instruments don't switch on and off like a light. A piano note <strong>attacks</strong> instantly then fades; a violin note swells in slowly. Synths copy this with an <strong>ADSR envelope</strong>:</p>
+  <p><strong>A</strong>ttack — time to reach full volume. <strong>D</strong>ecay — time to fall to the sustain level. <strong>S</strong>ustain — the level held while the key is down. <strong>R</strong>elease — fade-out time after letting go.</p>
+  <div class="anim">
+    <svg id="adsrFig" viewBox="0 0 560 176" role="img" aria-label="An ADSR loudness contour. A playhead traces attack, decay, sustain and release in real time, with the grey bar showing how long the key is held."></svg>
+    <p class="figcap">One note, in real time: the amber playhead climbs the attack, falls through the decay, rides the sustain while the key (grey bar) is held, then releases. Move the sliders below — the shape and the speed follow them.</p>
+  </div>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>Attack is a straight ramp. Decay and release are exponential: the level approaches its target like e^(−<em>t</em>/τ), never quite arriving — after time τ it has covered 63%, after 3τ about 95%. Exponential curves are used because real vibrating objects lose a fixed <em>fraction</em> of their energy per instant, so a plucked string&rsquo;s fade is exponential too; a linear fade sounds artificial.</p>
+    <p><b>Reading it:</b> <em>e</em> is a constant, about 2.718, that mathematics uses for natural growth and decay. e^(−<em>t</em>/τ) reads &ldquo;the fraction still remaining after time <em>t</em>&rdquo;: at <em>t</em> = τ (the Greek letter tau, the time constant) about 37% remains; at 3τ about 5%. Bigger τ = slower fade. The minus sign is what makes it decay instead of grow.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Say the release time constant τ = 0.1 seconds and the note is at full volume, 1.0.</li>
+      <li>After 0.1 s (one τ), about 37% is left: volume 0.37.</li>
+      <li>After 0.2 s (two τ), 37% of 37% ≈ 14% is left.</li>
+      <li>After 0.3 s, about 5%. Each τ keeps the same <em>fraction</em>, not the same amount — that is what &ldquo;exponential&rdquo; means.</li>
+      <li>The attack is different: a plain straight climb from 0 to full over the attack time. Rise straight, fall by fractions.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope4"></canvas>
+    <div class="btnrow">
+      <button class="pad gate" id="gate4">Hold to play (gate)</button>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="a4">Attack</label><input type="range" id="a4" min="1" max="2000" value="60" step="1"><output id="a4o">0.06 s</output></div>
+      <div class="ctl"><label for="d4">Decay</label><input type="range" id="d4" min="1" max="2000" value="250" step="1"><output id="d4o">0.25 s</output></div>
+      <div class="ctl"><label for="s4">Sustain</label><input type="range" id="s4" min="0" max="100" value="55" step="1"><output id="s4o">55 %</output></div>
+      <div class="ctl"><label for="r4">Release</label><input type="range" id="r4" min="1" max="3000" value="400" step="1"><output id="r4o">0.40 s</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Make a piano: fast attack, medium decay, low sustain. Now make a string pad: slow attack, high sustain, long release. Same oscillator — totally different instrument.</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 05 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 05 · LFO</div>
+  <h2>Modulation — making sound move</h2>
+  <p>An <strong>LFO</strong> (low-frequency oscillator) is an oscillator too slow to hear — instead of making sound, it <strong>wiggles other knobs for you</strong>, automatically, several times a second.</p>
+  <p>Point it at pitch and you get <strong>vibrato</strong> (like a singer's wobble). Point it at volume and you get <strong>tremolo</strong>. Point it at the filter cutoff and you get that "wub wub" of dubstep.</p>
+  <div class="anim">
+    <svg id="lfoFig" viewBox="0 0 560 176" role="img" aria-label="A slow LFO wave on top with a moving dot. The fast wave below squeezes and stretches as the dot rises and falls — vibrato drawn."></svg>
+    <p class="figcap">Cause and effect: the amber dot rides the slow LFO on top, and the fast wave underneath squeezes together (pitch up) and stretches apart (pitch down) exactly in step — vibrato, drawn.</p>
+  </div>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>Modulation is a function of a function: the target parameter becomes <em>p</em>(<em>t</em>) = <em>p</em>₀ + <em>d</em>·sin(2π<em>rt</em>) with rate <em>r</em> and depth <em>d</em>. Wobbling pitch this way at audio rates (fast enough to hear) stops sounding like vibrato and grows sidebands — that is exactly Module 08&rsquo;s FM synthesis; the LFO and the FM modulator are the same machine at different speeds.</p>
+    <p><b>Reading it:</b> &ldquo;function of a function&rdquo; just means one wave&rsquo;s output is plugged in where another wave&rsquo;s knob would be: <em>p</em>(<em>t</em>) is the knob position over time, <em>p</em>₀ the resting position (the subscript zero marks a starting value), <em>d</em> how far it swings, <em>r</em> how fast.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Say the pitch knob rests at <em>p</em>₀ = 330 Hz, depth <em>d</em> = 30 Hz, and the LFO rate is <em>r</em> = 2 wobbles per second.</li>
+      <li>At time <em>t</em> = 0: sin(0) = 0, so the pitch is 330 + 30×0 = 330 Hz. No change yet.</li>
+      <li>At <em>t</em> = 0.125 s the LFO is a quarter through its wobble: sin gives 1, so pitch = 330 + 30 = 360 Hz. Highest point.</li>
+      <li>At <em>t</em> = 0.375 s sin gives −1: pitch = 330 − 30 = 300 Hz. Lowest point.</li>
+      <li>Round and round, twice per second — you hear the pitch swing 300…360 as vibrato. Point the same maths at volume instead and it is tremolo.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope5"></canvas>
+    <div class="btnrow" id="lfoTarget">
+      <button class="pad" data-target="pitch" aria-pressed="true">→ Pitch (vibrato)</button>
+      <button class="pad" data-target="volume" aria-pressed="false">→ Volume (tremolo)</button>
+      <button class="pad run" id="run5" aria-pressed="false">Start</button>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="rate5">LFO Rate</label><input type="range" id="rate5" min="0.5" max="15" value="5" step="0.1"><output id="rate5o">5.0 Hz</output></div>
+      <div class="ctl"><label for="depth5">Depth</label><input type="range" id="depth5" min="0" max="100" value="35" step="1"><output id="depth5o">35 %</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Set a slow rate (1 Hz) with deep depth, then speed it up. At what rate does it stop sounding like "movement" and start sounding weird?</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 06 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 06 · Putting it together</div>
+  <h2>Subtractive synthesis — the classic signal chain</h2>
+  <p>Almost every classic synth — from the Minimoog onwards — wires the modules you just learned into one chain. Start with a bright, harmonic-rich wave, then <strong>subtract</strong> what you don't want:</p>
+  <div class="flow">
+    <span class="box">VCO<span class="sub">makes the wave</span></span>
+    <span class="arrow">▶</span>
+    <span class="box">VCF<span class="sub">filters the tone</span></span>
+    <span class="arrow">▶</span>
+    <span class="box">VCA<span class="sub">envelope shapes volume</span></span>
+    <span class="arrow">▶</span>
+    <span class="box">OUT<span class="sub">speaker</span></span>
+  </div>
+  <p class="hint">"VC" means voltage-controlled — in an analog synth, every module is steered by electrical voltages, including from the keyboard itself.</p>
+  <div class="demo">
+    <canvas class="scope" id="scope6"></canvas>
+    <div class="btnrow" id="wave6Btns">
+      <button class="pad" data-wave="sawtooth" aria-pressed="true">Saw</button>
+      <button class="pad" data-wave="square" aria-pressed="false">Square</button>
+      <button class="pad" data-wave="triangle" aria-pressed="false">Triangle</button>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="cut6">Cutoff</label><input type="range" id="cut6" min="0" max="100" value="60" step="1"><output id="cut6o">1.2 kHz</output></div>
+      <div class="ctl"><label for="res6">Resonance</label><input type="range" id="res6" min="0" max="20" value="6" step="0.5"><output id="res6o">Q 6.0</output></div>
+      <div class="ctl"><label for="a6">Attack</label><input type="range" id="a6" min="1" max="1500" value="10" step="1"><output id="a6o">0.01 s</output></div>
+      <div class="ctl"><label for="r6">Release</label><input type="range" id="r6" min="1" max="2500" value="350" step="1"><output id="r6o">0.35 s</output></div>
+    </div>
+    <div class="keys" id="keys6">
+      <button data-f="130.81">C3</button><button data-f="146.83">D3</button><button data-f="164.81">E3</button><button data-f="174.61">F3</button>
+      <button data-f="196.00">G3</button><button data-f="220.00">A3</button><button data-f="246.94">B3</button><button data-f="261.63">C4</button>
+    </div>
+    <p class="hint">Play from your computer keyboard too: <strong>A S D F G H J K</strong> — hold several for chords.</p>
+    <div class="try"><b>Try this</b>Design three sounds: a fat bass (saw, low cutoff, fast attack), a laser zap (square, high resonance, fast release) and a soft pad (triangle, slow attack, long release).</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 07 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 07 · From volts to numbers</div>
+  <h2>How digital audio works</h2>
+  <p>An analog synth's signal is a smooth, continuous voltage. A digital synth (or any computer) stores sound as a <strong>list of numbers</strong>: it measures the wave thousands of times per second (the <strong>sample rate</strong>) and rounds each measurement to the nearest step (the <strong>bit depth</strong>).</p>
+  <p>Take enough samples — CDs use 44,100 per second — and your ear can't tell the difference. Take too few, and the wave gets blocky and frequencies get misread, a problem called <strong>aliasing</strong>. This is the maths behind <strong>DSP</strong> (digital signal processing): everything a digital synth does — oscillators, filters, effects — is arithmetic on that list of numbers.</p>
+  <div class="anim">
+    <svg id="stairFig" viewBox="0 0 560 150" role="img" aria-label="A smooth sine wave with a staircase version overlaid. The staircase steps grow coarser as the sample rate falls, then fine again."></svg>
+    <p class="figcap">The same wave, measured: with plenty of measurements per cycle the staircase hugs the smooth curve; as the rate falls the steps grow into chunky blocks — this is what the sliders in the demo below are doing.</p>
+  </div>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>Nyquist&rsquo;s theorem: to capture frequency <em>f</em> you need a sample rate above 2<em>f</em> — anything higher folds back as an alias at <em>f</em><sub>s</sub> − <em>f</em>. CD audio&rsquo;s 44,100 Hz covers hearing&rsquo;s ~20 kHz ceiling with margin. Bit depth sets the noise floor: each bit adds ~6.02 dB of signal-to-noise, so 8 bits ≈ 48 dB (audibly gritty) and 16 bits ≈ 96 dB (transparent).</p>
+    <svg class="mathfig" viewBox="0 0 560 220" role="img" aria-label="Sparse sample dots on a fast sine also fitting a slower alias sine" xmlns="http://www.w3.org/2000/svg"><line x1="40" y1="100" x2="520" y2="100" stroke="#DFE4EB"/><path d="M40.0,100.0 L42.0,90.0 L44.0,80.2 L46.0,70.9 L48.0,62.4 L50.0,54.7 L52.0,48.2 L54.0,43.0 L56.0,39.1 L58.0,36.8 L60.0,36.0 L62.0,36.8 L64.0,39.1 L66.0,43.0 L68.0,48.2 L70.0,54.7 L72.0,62.4 L74.0,70.9 L76.0,80.2 L78.0,90.0 L80.0,100.0 L82.0,110.0 L84.0,119.8 L86.0,129.1 L88.0,137.6 L90.0,145.3 L92.0,151.8 L94.0,157.0 L96.0,160.9 L98.0,163.2 L100.0,164.0 L102.0,163.2 L104.0,160.9 L106.0,157.0 L108.0,151.8 L110.0,145.3 L112.0,137.6 L114.0,129.1 L116.0,119.8 L118.0,110.0 L120.0,100.0 L122.0,90.0 L124.0,80.2 L126.0,70.9 L128.0,62.4 L130.0,54.7 L132.0,48.2 L134.0,43.0 L136.0,39.1 L138.0,36.8 L140.0,36.0 L142.0,36.8 L144.0,39.1 L146.0,43.0 L148.0,48.2 L150.0,54.7 L152.0,62.4 L154.0,70.9 L156.0,80.2 L158.0,90.0 L160.0,100.0 L162.0,110.0 L164.0,119.8 L166.0,129.1 L168.0,137.6 L170.0,145.3 L172.0,151.8 L174.0,157.0 L176.0,160.9 L178.0,163.2 L180.0,164.0 L182.0,163.2 L184.0,160.9 L186.0,157.0 L188.0,151.8 L190.0,145.3 L192.0,137.6 L194.0,129.1 L196.0,119.8 L198.0,110.0 L200.0,100.0 L202.0,90.0 L204.0,80.2 L206.0,70.9 L208.0,62.4 L210.0,54.7 L212.0,48.2 L214.0,43.0 L216.0,39.1 L218.0,36.8 L220.0,36.0 L222.0,36.8 L224.0,39.1 L226.0,43.0 L228.0,48.2 L230.0,54.7 L232.0,62.4 L234.0,70.9 L236.0,80.2 L238.0,90.0 L240.0,100.0 L242.0,110.0 L244.0,119.8 L246.0,129.1 L248.0,137.6 L250.0,145.3 L252.0,151.8 L254.0,157.0 L256.0,160.9 L258.0,163.2 L260.0,164.0 L262.0,163.2 L264.0,160.9 L266.0,157.0 L268.0,151.8 L270.0,145.3 L272.0,137.6 L274.0,129.1 L276.0,119.8 L278.0,110.0 L280.0,100.0 L282.0,90.0 L284.0,80.2 L286.0,70.9 L288.0,62.4 L290.0,54.7 L292.0,48.2 L294.0,43.0 L296.0,39.1 L298.0,36.8 L300.0,36.0 L302.0,36.8 L304.0,39.1 L306.0,43.0 L308.0,48.2 L310.0,54.7 L312.0,62.4 L314.0,70.9 L316.0,80.2 L318.0,90.0 L320.0,100.0 L322.0,110.0 L324.0,119.8 L326.0,129.1 L328.0,137.6 L330.0,145.3 L332.0,151.8 L334.0,157.0 L336.0,160.9 L338.0,163.2 L340.0,164.0 L342.0,163.2 L344.0,160.9 L346.0,157.0 L348.0,151.8 L350.0,145.3 L352.0,137.6 L354.0,129.1 L356.0,119.8 L358.0,110.0 L360.0,100.0 L362.0,90.0 L364.0,80.2 L366.0,70.9 L368.0,62.4 L370.0,54.7 L372.0,48.2 L374.0,43.0 L376.0,39.1 L378.0,36.8 L380.0,36.0 L382.0,36.8 L384.0,39.1 L386.0,43.0 L388.0,48.2 L390.0,54.7 L392.0,62.4 L394.0,70.9 L396.0,80.2 L398.0,90.0 L400.0,100.0 L402.0,110.0 L404.0,119.8 L406.0,129.1 L408.0,137.6 L410.0,145.3 L412.0,151.8 L414.0,157.0 L416.0,160.9 L418.0,163.2 L420.0,164.0 L422.0,163.2 L424.0,160.9 L426.0,157.0 L428.0,151.8 L430.0,145.3 L432.0,137.6 L434.0,129.1 L436.0,119.8 L438.0,110.0 L440.0,100.0 L442.0,90.0 L444.0,80.2 L446.0,70.9 L448.0,62.4 L450.0,54.7 L452.0,48.2 L454.0,43.0 L456.0,39.1 L458.0,36.8 L460.0,36.0 L462.0,36.8 L464.0,39.1 L466.0,43.0 L468.0,48.2 L470.0,54.7 L472.0,62.4 L474.0,70.9 L476.0,80.2 L478.0,90.0 L480.0,100.0 L482.0,110.0 L484.0,119.8 L486.0,129.1 L488.0,137.6 L490.0,145.3 L492.0,151.8 L494.0,157.0 L496.0,160.9 L498.0,163.2 L500.0,164.0 L502.0,163.2 L504.0,160.9 L506.0,157.0 L508.0,151.8 L510.0,145.3 L512.0,137.6 L514.0,129.1 L516.0,119.8 L518.0,110.0 L520.0,100.0" fill="none" stroke="#5B6572" stroke-width="1.5" stroke-dasharray="4 3"/><path d="M40.0,100.0 L42.0,103.3 L44.0,106.7 L46.0,110.0 L48.0,113.3 L50.0,116.6 L52.0,119.8 L54.0,122.9 L56.0,126.0 L58.0,129.1 L60.0,132.0 L62.0,134.9 L64.0,137.6 L66.0,140.3 L68.0,142.8 L70.0,145.3 L72.0,147.6 L74.0,149.7 L76.0,151.8 L78.0,153.7 L80.0,155.4 L82.0,157.0 L84.0,158.5 L86.0,159.7 L88.0,160.9 L90.0,161.8 L92.0,162.6 L94.0,163.2 L96.0,163.6 L98.0,163.9 L100.0,164.0 L102.0,163.9 L104.0,163.6 L106.0,163.2 L108.0,162.6 L110.0,161.8 L112.0,160.9 L114.0,159.7 L116.0,158.5 L118.0,157.0 L120.0,155.4 L122.0,153.7 L124.0,151.8 L126.0,149.7 L128.0,147.6 L130.0,145.3 L132.0,142.8 L134.0,140.3 L136.0,137.6 L138.0,134.9 L140.0,132.0 L142.0,129.1 L144.0,126.0 L146.0,122.9 L148.0,119.8 L150.0,116.6 L152.0,113.3 L154.0,110.0 L156.0,106.7 L158.0,103.3 L160.0,100.0 L162.0,96.7 L164.0,93.3 L166.0,90.0 L168.0,86.7 L170.0,83.4 L172.0,80.2 L174.0,77.1 L176.0,74.0 L178.0,70.9 L180.0,68.0 L182.0,65.1 L184.0,62.4 L186.0,59.7 L188.0,57.2 L190.0,54.7 L192.0,52.4 L194.0,50.3 L196.0,48.2 L198.0,46.3 L200.0,44.6 L202.0,43.0 L204.0,41.5 L206.0,40.3 L208.0,39.1 L210.0,38.2 L212.0,37.4 L214.0,36.8 L216.0,36.4 L218.0,36.1 L220.0,36.0 L222.0,36.1 L224.0,36.4 L226.0,36.8 L228.0,37.4 L230.0,38.2 L232.0,39.1 L234.0,40.3 L236.0,41.5 L238.0,43.0 L240.0,44.6 L242.0,46.3 L244.0,48.2 L246.0,50.3 L248.0,52.4 L250.0,54.7 L252.0,57.2 L254.0,59.7 L256.0,62.4 L258.0,65.1 L260.0,68.0 L262.0,70.9 L264.0,74.0 L266.0,77.1 L268.0,80.2 L270.0,83.4 L272.0,86.7 L274.0,90.0 L276.0,93.3 L278.0,96.7 L280.0,100.0 L282.0,103.3 L284.0,106.7 L286.0,110.0 L288.0,113.3 L290.0,116.6 L292.0,119.8 L294.0,122.9 L296.0,126.0 L298.0,129.1 L300.0,132.0 L302.0,134.9 L304.0,137.6 L306.0,140.3 L308.0,142.8 L310.0,145.3 L312.0,147.6 L314.0,149.7 L316.0,151.8 L318.0,153.7 L320.0,155.4 L322.0,157.0 L324.0,158.5 L326.0,159.7 L328.0,160.9 L330.0,161.8 L332.0,162.6 L334.0,163.2 L336.0,163.6 L338.0,163.9 L340.0,164.0 L342.0,163.9 L344.0,163.6 L346.0,163.2 L348.0,162.6 L350.0,161.8 L352.0,160.9 L354.0,159.7 L356.0,158.5 L358.0,157.0 L360.0,155.4 L362.0,153.7 L364.0,151.8 L366.0,149.7 L368.0,147.6 L370.0,145.3 L372.0,142.8 L374.0,140.3 L376.0,137.6 L378.0,134.9 L380.0,132.0 L382.0,129.1 L384.0,126.0 L386.0,122.9 L388.0,119.8 L390.0,116.6 L392.0,113.3 L394.0,110.0 L396.0,106.7 L398.0,103.3 L400.0,100.0 L402.0,96.7 L404.0,93.3 L406.0,90.0 L408.0,86.7 L410.0,83.4 L412.0,80.2 L414.0,77.1 L416.0,74.0 L418.0,70.9 L420.0,68.0 L422.0,65.1 L424.0,62.4 L426.0,59.7 L428.0,57.2 L430.0,54.7 L432.0,52.4 L434.0,50.3 L436.0,48.2 L438.0,46.3 L440.0,44.6 L442.0,43.0 L444.0,41.5 L446.0,40.3 L448.0,39.1 L450.0,38.2 L452.0,37.4 L454.0,36.8 L456.0,36.4 L458.0,36.1 L460.0,36.0 L462.0,36.1 L464.0,36.4 L466.0,36.8 L468.0,37.4 L470.0,38.2 L472.0,39.1 L474.0,40.3 L476.0,41.5 L478.0,43.0 L480.0,44.6 L482.0,46.3 L484.0,48.2 L486.0,50.3 L488.0,52.4 L490.0,54.7 L492.0,57.2 L494.0,59.7 L496.0,62.4 L498.0,65.1 L500.0,68.0 L502.0,70.9 L504.0,74.0 L506.0,77.1 L508.0,80.2 L510.0,83.4 L512.0,86.7 L514.0,90.0 L516.0,93.3 L518.0,96.7 L520.0,100.0" fill="none" stroke="#B45309" stroke-width="2.5"/><circle cx="40.0" cy="100.0" r="5" fill="#059669"/><circle cx="100.0" cy="164.0" r="5" fill="#059669"/><circle cx="160.0" cy="100.0" r="5" fill="#059669"/><circle cx="220.0" cy="36.0" r="5" fill="#059669"/><circle cx="280.0" cy="100.0" r="5" fill="#059669"/><circle cx="340.0" cy="164.0" r="5" fill="#059669"/><circle cx="400.0" cy="100.0" r="5" fill="#059669"/><circle cx="460.0" cy="36.0" r="5" fill="#059669"/><circle cx="520.0" cy="100.0" r="5" fill="#059669"/><text x="300" y="26" fill="#5B6572" font-size="12" text-anchor="middle" font-family="system-ui" >grey dashes: the real 6000 Hz tone</text><text x="300" y="46" fill="#059669" font-size="12" text-anchor="middle" font-family="system-ui" >green dots: the only moments we measured</text><text x="300" y="200" fill="#B45309" font-size="12" text-anchor="middle" font-family="system-ui" >amber: the 2000 Hz wave the dots also fit — the alias you hear</text></svg>
+    <p class="figcap">Why aliasing happens: the green measurement dots sit perfectly on BOTH waves. Once sampled, the fast tone and the slow one are the same data.</p>
+    <p><b>Reading it:</b> <em>f</em><sub>s</sub> is the sample rate (the s subscript = &ldquo;sampling&rdquo;). The folding rule in numbers: sample a 6000 Hz tone at 8000 Hz and you get |6000 − 8000| = 2000 Hz — the wave you hear is the mirror image around the halfway point <em>f</em><sub>s</sub>/2. The ~6 dB-per-bit rule comes from each extra bit halving the size of the rounding error.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Sample rate first. At <em>f</em><sub>s</sub> = 8000 measurements per second, the fastest wobble you can honestly capture is 4000 per second — you need at least two measurements per wobble (one up, one down).</li>
+      <li>Feed in a 6000 Hz tone anyway. The measurements can&rsquo;t keep up, and the dots they record trace out a slower wave.</li>
+      <li>Which one? Distance from the nearest multiple of 8000: the nearest is 8000 itself, and 8000 − 6000 = 2000. You hear 2000 Hz. Wrong note, confidently played.</li>
+      <li>Bit depth is the other axis. With 8 bits you get 256 volume steps; every measurement gets rounded to the nearest step.</li>
+      <li>The rounding errors are tiny random mistakes — heard as hiss. Each extra bit doubles the number of steps, halves the mistakes, and buys about 6 dB more silence beneath the music.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope7" style="height:150px"></canvas>
+    <div class="btnrow" id="ab7">
+      <button class="pad" data-src="analog" aria-pressed="true">Smooth original</button>
+      <button class="pad" data-src="digital" aria-pressed="false">Digital copy</button>
+      <button class="pad run" id="run7" aria-pressed="false">Start</button>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label for="sr7">Samples / cycle</label><input type="range" id="sr7" min="3" max="64" value="12" step="1"><output id="sr7o">12</output></div>
+      <div class="ctl"><label for="bd7">Bit steps</label><input type="range" id="bd7" min="2" max="32" value="16" step="1"><output id="bd7o">16 levels</output></div>
+    </div>
+    <div class="try"><b>Try this</b>The green line is the smooth analog wave; the amber steps are its digital copy. Now press Start and switch between them. Drag the samples right down while the digital copy plays — the grit and false extra notes you hear are <strong>quantisation noise</strong> and <strong>aliasing</strong>. (The Nyquist theorem says you need at least 2 samples per cycle.)</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 08 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 08 · FM Synthesis</div>
+  <h2>FM — one oscillator shaking another</h2>
+  <p>Everything so far has been <strong>subtractive</strong>: start bright, filter down. <strong>FM (frequency modulation)</strong> builds tone the opposite way — a <strong>modulator</strong> oscillator wobbles the pitch of a <strong>carrier</strong> oscillator so fast that the wobble itself becomes new harmonics.</p>
+  <p>The <strong>ratio</strong> between the two frequencies decides the character: whole-number ratios sound musical and harmonic; in-between ratios sound metallic and bell-like. The <strong>amount</strong> decides how bright it gets. This is how the Yamaha DX7 — the best-selling synth of the 1980s — made every electric piano and bell you heard on the radio.</p>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>FM: <em>y</em>(<em>t</em>) = sin(2π<em>f</em><sub>c</sub><em>t</em> + <em>I</em>·sin(2π<em>f</em><sub>m</sub><em>t</em>)). The output contains sidebands at <em>f</em><sub>c</sub> ± <em>k</em><em>f</em><sub>m</sub>, with amplitudes given by Bessel functions of the index <em>I</em> — more index, more sidebands, brighter sound. When <em>f</em><sub>m</sub>/<em>f</em><sub>c</sub> is a whole number the sidebands land on harmonics (musical); otherwise they fall between (bells and metal).</p>
+    <svg class="mathfig" viewBox="0 0 560 200" role="img" aria-label="FM spectrum: carrier stick with sideband pairs spaced by the modulator frequency" xmlns="http://www.w3.org/2000/svg"><line x1="40" y1="160" x2="520" y2="160" stroke="#DFE4EB" stroke-width="1.5"/><line x1="280" y1="160" x2="280" y2="40" stroke="#059669" stroke-width="5"/><text x="280" y="182" fill="#059669" font-size="12" text-anchor="middle" font-family="system-ui" >f<tspan baseline-shift="sub" font-size="9">c</tspan> carrier</text><line x1="210" y1="160" x2="210" y2="85" stroke="#B45309" stroke-width="4"/><line x1="350" y1="160" x2="350" y2="85" stroke="#B45309" stroke-width="4"/><text x="350" y="182" fill="#B45309" font-size="11" text-anchor="middle" font-family="system-ui" >f<tspan baseline-shift="sub" font-size="9">c</tspan>±f<tspan baseline-shift="sub" font-size="9">m</tspan></text><text x="210" y="182" fill="#B45309" font-size="11" text-anchor="middle" font-family="system-ui" >f<tspan baseline-shift="sub" font-size="9">c</tspan>±f<tspan baseline-shift="sub" font-size="9">m</tspan></text><line x1="140" y1="160" x2="140" y2="110" stroke="#B45309" stroke-width="4"/><line x1="420" y1="160" x2="420" y2="110" stroke="#B45309" stroke-width="4"/><text x="420" y="182" fill="#B45309" font-size="11" text-anchor="middle" font-family="system-ui" >f<tspan baseline-shift="sub" font-size="9">c</tspan>±2f<tspan baseline-shift="sub" font-size="9">m</tspan></text><text x="140" y="182" fill="#B45309" font-size="11" text-anchor="middle" font-family="system-ui" >f<tspan baseline-shift="sub" font-size="9">c</tspan>±2f<tspan baseline-shift="sub" font-size="9">m</tspan></text><path d="M280,30 v-6 h70 v6" fill="none" stroke="#5B6572" stroke-width="1.2" transform="translate(0,26)"/><text x="315.0" y="44" fill="#5B6572" font-size="11" text-anchor="middle" font-family="system-ui" >spacing = f<tspan baseline-shift="sub" font-size="9">m</tspan></text><text x="300" y="18" fill="#5B6572" font-size="11" text-anchor="middle" font-family="system-ui" >more Amount (index I) → more pairs, taller outer sticks</text></svg>
+    <p class="figcap">What FM puts in the spectrum: the carrier, plus sideband pairs marching outward in steps of the modulator frequency.</p>
+    <p><b>Reading it:</b> the unusual part is a sin() <em>inside</em> another sin(): the inner one wiggles the outer one&rsquo;s angle. <em>f</em><sub>c</sub> and <em>f</em><sub>m</sub> are the carrier and modulator frequencies (the subscripts are just names). <em>I</em>, the index, has no units — it measures how hard the phase is pushed. The ± in <em>f</em><sub>c</sub> ± <em>k</em><em>f</em><sub>m</sub> means sidebands appear in pairs, one above and one below the carrier, at every whole-number step <em>k</em>.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Take a carrier sine at 220 Hz — that is the note you would hear alone.</li>
+      <li>Now wobble its angle with a second sine, the modulator, at 440 Hz. Not its volume — its <em>timing</em>: pushed slightly ahead, then slightly behind, 440 times a second.</li>
+      <li>Wobbling the timing that fast doesn&rsquo;t sound like vibrato — it invents new frequencies: at 220±440, 220±880, 220±1320… — one pair per step, spaced by the modulator&rsquo;s 440.</li>
+      <li>Turn the Amount up and the timing gets pushed harder: more pairs appear, the sound gets brighter. That is the index <em>I</em>.</li>
+      <li>Because 440 is exactly 2 × 220, all those new frequencies land on musical harmonics — it sounds like an instrument. Set the ratio to 3.5 and they land between — it sounds like a bell.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope8"></canvas>
+    <canvas class="scope" id="spec8" style="height:70px"></canvas>
+    <p class="hint">Watch the spectrum sprout new harmonic bars as you raise the FM amount — no filter involved.</p>
+    <div class="btnrow"><button class="pad run" id="run8" aria-pressed="false">Start</button></div>
+    <div class="controls">
+      <div class="ctl"><label for="ratio8">Ratio</label><input type="range" id="ratio8" min="0.5" max="8" value="2" step="0.5"><output id="ratio8o">2.0 : 1</output></div>
+      <div class="ctl"><label for="amt8">FM Amount</label><input type="range" id="amt8" min="0" max="100" value="35" step="1"><output id="amt8o">35 %</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Set the amount to zero — pure sine. Raise it slowly and hear brightness grow. Now compare ratio 2.0 (harmonic, organ-like) with 3.5 (clangy, bell-like). Design a church bell and an electric piano.</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 09: WAVETABLE ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 09 · Wavetable</div>
+  <h2>Wavetable — morphing between shapes</h2>
+  <p>Module 02 gave you four fixed waveforms. A <strong>wavetable synth</strong> stores a whole <strong>table</strong> of single-cycle shapes and lets you <strong>morph</strong> smoothly between them while the note plays — the harmonic recipe itself becomes a knob you can turn.</p>
+  <p>Invented on the PPG Wave in the late 1970s and everywhere today: Serum, Vital and most modern EDM basses are wavetables being scanned by envelopes and LFOs. The movement you hear in those sounds is exactly what the Morph slider does here.</p>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>Each table position stores a harmonic recipe <em>a</em><sub><em>k</em></sub>. Morphing at position <em>m</em> between frames <em>A</em> and <em>B</em> interpolates every harmonic: <em>a</em><sub><em>k</em></sub> = (1−<em>m</em>)<em>A</em><sub><em>k</em></sub> + <em>m</em><em>B</em><sub><em>k</em></sub>, and the waveform is rebuilt from the blended recipe. Morphing recipes (spectra) sounds smooth where crossfading raw waveforms can cancel and comb.</p>
+    <p><b>Reading it:</b> <em>a</em><sub><em>k</em></sub> means &ldquo;the volume of harmonic number <em>k</em>&rdquo; — one number per harmonic, the whole list being the recipe. The blend (1−<em>m</em>)<em>A</em><sub><em>k</em></sub> + <em>m</em><em>B</em><sub><em>k</em></sub> is a weighted average: at <em>m</em> = 0 you get pure recipe A, at <em>m</em> = 1 pure B, at <em>m</em> = 0.5 an equal mix — <em>m</em> is exactly the Morph slider, scaled 0 to 1.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Each stored shape is just a list: &ldquo;harmonic 1 this loud, harmonic 2 this loud…&rdquo;.</li>
+      <li>Say shape A has harmonic 3 at volume 0.2 and shape B has it at 0.6.</li>
+      <li>With the Morph slider halfway (<em>m</em> = 0.5), blend them: half of 0.2 plus half of 0.6 = 0.4.</li>
+      <li>Do that same blend for every harmonic in the list — one weighted average each.</li>
+      <li>Rebuild the waveform from the blended list and play it. Slide the knob and the recipe — and the sound — glides between the two shapes.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope9"></canvas>
+    <canvas class="scope" id="spec9" style="height:70px"></canvas>
+    <p class="hint">Watch the spectrum bars slide between recipes as you morph — sine's single bar grows into saw's full staircase.</p>
+    <div class="btnrow"><button class="pad run" id="run9" aria-pressed="false">Start</button></div>
+    <div class="controls">
+      <div class="ctl"><label for="morph9">Morph</label><input type="range" id="morph9" min="0" max="3" value="0" step="0.01"><output id="morph9o">Sine</output></div>
+      <div class="ctl"><label for="freq9">Frequency</label><input type="range" id="freq9" min="55" max="440" value="110" step="1"><output id="freq9o">110 Hz</output></div>
+    </div>
+    <div class="try"><b>Try this</b>Start on Sine and sweep the Morph slider slowly to the far end while it plays. You're hearing harmonics being added one at a time. Wobble the slider rhythmically — that's the classic wavetable bass move.</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 10: GRANULAR ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 10 · Granular</div>
+  <h2>Granular — sound as tiny grains</h2>
+  <p>Granular synthesis takes a recording, chops it into <strong>grains</strong> a few dozen milliseconds long, and replays them in a stream — hundreds per second, overlapping, from wherever in the recording you point. Big grains sound like stuttering echoes; tiny dense grains melt into a continuous <strong>texture</strong>.</p>
+  <p>This is how film sound designers build drones from a single word, and how your phone slows a voice memo down without making it deeper — <strong>time-stretching</strong> is granular playback with the position crawling forward slower than real time.</p>
+  <details class="maths">
+    <summary>The maths</summary>
+    <p>Each grain is the source multiplied by a short window <em>w</em>(<em>t</em>) that fades in and out (ours is triangular; Hann, cos², is the classic). Windowing prevents clicks at the grain edges, but shorter grains smear frequency: a grain of length <em>T</em> can&rsquo;t resolve frequencies closer than about 1/<em>T</em> Hz — the same time-frequency trade-off behind the uncertainty principle.</p>
+    <svg class="mathfig" viewBox="0 0 560 180" role="img" aria-label="Overlapping windowed grain envelopes along a timeline" xmlns="http://www.w3.org/2000/svg"><line x1="40" y1="120" x2="520" y2="120" stroke="#DFE4EB"/><path d="M40.0,120.0 L44.0,119.1 L48.0,116.4 L52.0,112.1 L56.0,106.5 L60.0,100.0 L64.0,92.8 L68.0,85.6 L72.0,78.7 L76.0,72.5 L80.0,67.5 L84.0,64.0 L88.0,62.2 L92.0,62.2 L96.0,64.0 L100.0,67.5 L104.0,72.5 L108.0,78.7 L112.0,85.6 L116.0,92.8 L120.0,100.0 L124.0,106.5 L128.0,112.1 L132.0,116.4 L136.0,119.1 L140.0,120.0" fill="none" stroke="#059669" stroke-width="2"/><path d="M108.0,120.0 L112.0,119.1 L116.0,116.4 L120.0,112.1 L124.0,106.5 L128.0,100.0 L132.0,92.8 L136.0,85.6 L140.0,78.7 L144.0,72.5 L148.0,67.5 L152.0,64.0 L156.0,62.2 L160.0,62.2 L164.0,64.0 L168.0,67.5 L172.0,72.5 L176.0,78.7 L180.0,85.6 L184.0,92.8 L188.0,100.0 L192.0,106.5 L196.0,112.1 L200.0,116.4 L204.0,119.1 L208.0,120.0" fill="none" stroke="#B45309" stroke-width="2"/><path d="M176.0,120.0 L180.0,119.1 L184.0,116.4 L188.0,112.1 L192.0,106.5 L196.0,100.0 L200.0,92.8 L204.0,85.6 L208.0,78.7 L212.0,72.5 L216.0,67.5 L220.0,64.0 L224.0,62.2 L228.0,62.2 L232.0,64.0 L236.0,67.5 L240.0,72.5 L244.0,78.7 L248.0,85.6 L252.0,92.8 L256.0,100.0 L260.0,106.5 L264.0,112.1 L268.0,116.4 L272.0,119.1 L276.0,120.0" fill="none" stroke="#059669" stroke-width="2"/><path d="M244.0,120.0 L248.0,119.1 L252.0,116.4 L256.0,112.1 L260.0,106.5 L264.0,100.0 L268.0,92.8 L272.0,85.6 L276.0,78.7 L280.0,72.5 L284.0,67.5 L288.0,64.0 L292.0,62.2 L296.0,62.2 L300.0,64.0 L304.0,67.5 L308.0,72.5 L312.0,78.7 L316.0,85.6 L320.0,92.8 L324.0,100.0 L328.0,106.5 L332.0,112.1 L336.0,116.4 L340.0,119.1 L344.0,120.0" fill="none" stroke="#B45309" stroke-width="2"/><path d="M312.0,120.0 L316.0,119.1 L320.0,116.4 L324.0,112.1 L328.0,106.5 L332.0,100.0 L336.0,92.8 L340.0,85.6 L344.0,78.7 L348.0,72.5 L352.0,67.5 L356.0,64.0 L360.0,62.2 L364.0,62.2 L368.0,64.0 L372.0,67.5 L376.0,72.5 L380.0,78.7 L384.0,85.6 L388.0,92.8 L392.0,100.0 L396.0,106.5 L400.0,112.1 L404.0,116.4 L408.0,119.1 L412.0,120.0" fill="none" stroke="#059669" stroke-width="2"/><path d="M380.0,120.0 L384.0,119.1 L388.0,116.4 L392.0,112.1 L396.0,106.5 L400.0,100.0 L404.0,92.8 L408.0,85.6 L412.0,78.7 L416.0,72.5 L420.0,67.5 L424.0,64.0 L428.0,62.2 L432.0,62.2 L436.0,64.0 L440.0,67.5 L444.0,72.5 L448.0,78.7 L452.0,85.6 L456.0,92.8 L460.0,100.0 L464.0,106.5 L468.0,112.1 L472.0,116.4 L476.0,119.1 L480.0,120.0" fill="none" stroke="#B45309" stroke-width="2"/><path d="M448.0,120.0 L452.0,119.1 L456.0,116.4 L460.0,112.1 L464.0,106.5 L468.0,100.0 L472.0,92.8 L476.0,85.6 L480.0,78.7 L484.0,72.5 L488.0,67.5 L492.0,64.0 L496.0,62.2 L500.0,62.2 L504.0,64.0 L508.0,67.5 L512.0,72.5 L516.0,78.7 L520.0,85.6 L524.0,92.8 L528.0,100.0 L532.0,106.5 L536.0,112.1 L540.0,116.4 L544.0,119.1 L548.0,120.0" fill="none" stroke="#059669" stroke-width="2"/><text x="280" y="30" fill="#5B6572" font-size="12" text-anchor="middle" font-family="system-ui" >each bump = one windowed grain, faded in and out</text><text x="280" y="158" fill="#5B6572" font-size="12" text-anchor="middle" font-family="system-ui" >overlapping grains fuse into one continuous sound</text></svg>
+    <p class="figcap">Grains on a timeline: every snippet fades in and out, and the overlaps hide the joins.</p>
+    <p><b>Reading it:</b> <em>w</em>(<em>t</em>) is the window — a volume curve multiplied onto the grain so it fades in and out instead of clicking. The trade-off in numbers: a 20 ms grain (T = 0.02 s) blurs frequencies by about 1/0.02 = 50 Hz, so two tones 30 Hz apart become indistinguishable inside it. Long grains hear pitch precisely but smear time; short grains the reverse.</p>
+    <p><b>Step by step</b> — with real numbers:</p>
+    <ol class="steps">
+      <li>Cut a 50-millisecond snippet out of the recording — one grain.</li>
+      <li>Multiply it by a fade-in/fade-out curve (the window) so it starts and ends at zero — no clicks.</li>
+      <li>Play it. Before it finishes, fire the next grain from (almost) the same spot, overlapping.</li>
+      <li>Dozens of overlapping windowed snippets per second fuse into one continuous texture.</li>
+      <li>The catch: a 50 ms snippet can&rsquo;t tell apart frequencies closer than about 1/0.05 = 20 Hz. Shrink the grains and the pitch gets blurrier — you trade time-detail for pitch-detail.</li>
+    </ol>
+  </details>
+
+  <div class="demo">
+    <canvas class="scope" id="scope10"></canvas>
+    <canvas class="scope" id="spec10" style="height:70px"></canvas>
+    <div class="btnrow"><button class="pad run" id="run10" aria-pressed="false">Start</button></div>
+    <div class="controls">
+      <div class="ctl"><label for="pos10">Position</label><input type="range" id="pos10" min="0" max="100" value="20" step="0.5"><output id="pos10o">20 %</output></div>
+      <div class="ctl"><label for="size10">Grain size</label><input type="range" id="size10" min="20" max="250" value="90" step="1"><output id="size10o">90 ms</output></div>
+      <div class="ctl"><label for="dens10">Density</label><input type="range" id="dens10" min="4" max="40" value="15" step="1"><output id="dens10o">15 /s</output></div>
+      <div class="ctl"><label for="spray10">Spray</label><input type="range" id="spray10" min="0" max="200" value="30" step="1"><output id="spray10o">30 ms</output></div>
+    </div>
+    <div class="try"><b>Try this</b>The source is a short four-note phrase. Park Position on one note — the grains keep replaying that instant, so the note holds indefinitely. Shrink the grains under 40 ms for a smooth drone, then push Spray right up so grains land all over the phrase — the whole melody blurs into one texture.</div>
+  </div>
+</section>
+
+<!-- ============ MODULE 11 ============ -->
+<section class="module">
+  <span class="screw tl"></span><span class="screw tr"></span><span class="screw bl"></span><span class="screw br"></span>
+  <div class="eyebrow">Module 11 · Families</div>
+  <h2>Analog vs digital vs hybrid</h2>
+  <p>All three families use the same ideas you've just learned — oscillators, filters, envelopes, modulation. They differ in <strong>what the signal is made of</strong> while it travels through the synth.</p>
+  <div class="cards">
+    <div class="card">
+      <h3>Analog</h3>
+      <ul>
+        <li><b>Signal:</b> continuous voltage in real circuits</li>
+        <li><b>Sound:</b> warm, slightly imperfect — components drift</li>
+        <li><b>Strength:</b> smooth, organic character</li>
+        <li><b>Weakness:</b> can't save patches easily (originally), goes out of tune</li>
+      </ul>
+      <div class="ex">Minimoog · Prophet-5 · Korg MS-20</div>
+    </div>
+    <div class="card">
+      <h3>Digital</h3>
+      <ul>
+        <li><b>Signal:</b> numbers processed by chips (DSP)</li>
+        <li><b>Sound:</b> precise, clean — can be anything</li>
+        <li><b>Strength:</b> FM, wavetables, samples, total recall of patches</li>
+        <li><b>Weakness:</b> early ones sounded cold; aliasing if done badly</li>
+      </ul>
+      <div class="ex">Yamaha DX7 · Roland D-50 · every softsynth</div>
+    </div>
+    <div class="card">
+      <h3>Hybrid</h3>
+      <ul>
+        <li><b>Signal:</b> digital oscillators → real analog filters</li>
+        <li><b>Sound:</b> digital flexibility with analog warmth</li>
+        <li><b>Strength:</b> best of both, stable tuning, saved patches</li>
+        <li><b>Weakness:</b> more complex to design and build</li>
+      </ul>
+      <div class="ex">Ensoniq ESQ-1 · Novation Peak · Prophet VS</div>
+    </div>
+  </div>
+  <div class="try"><b>Try this</b>Modern "virtual analog" synths are digital synths doing DSP maths that imitates analog circuits. Discuss: if you can't hear the difference, does it matter which is which?</div>
+</section>
+
+<footer>
+  <b>For teachers:</b> each module is a 10–15 minute chunk — read the intro aloud, let students drive the demo, then set the "Try this" task in pairs. The whole rack covers one lesson strand: sound → oscillators → filters → envelopes → modulation → signal chain → digital audio → FM synthesis → wavetable → granular → synth families — then build your own in the <b>Patch Bay</b> companion lab. Everything runs offline in a single file using the Web Audio API — the same DSP running inside real digital synths.
+</footer>
+
+</div><!-- /rack -->
+</div><!-- /layout -->
+
+<script src="synth-lab.anime.min.js"></script>
+<script src="synth-lab.js"></script>
+</body>
+</html>
